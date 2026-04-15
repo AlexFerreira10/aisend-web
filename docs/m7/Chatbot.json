@@ -1,0 +1,1226 @@
+{
+  "name": "Chatbot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "64eb31c7-0afe-42c5-aa22-3850e8e3c6b4",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        25184,
+        5392
+      ],
+      "id": "60c0555c-34f4-4c6c-b6d6-122374073187",
+      "name": "Receive Message",
+      "webhookId": "64eb31c7-0afe-42c5-aa22-3850e8e3c6b4"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\n\n// Suporta duas estruturas: direta e aninhada em data\nconst data = body?.data || body;\nconst key = data?.key || {};\n\nconst remoteJid = key?.remoteJid || body?.remoteJid || '';\nconst phone = remoteJid.replace('@s.whatsapp.net', '') || '';\nconst pushName = data?.pushName || body?.pushName || '';\nconst instanceName = body?.instance || body?.instanceName || '';\nconst isFromMe = key?.fromMe || body?.fromMe || false;\nconst event = body?.event || '';\n\nif (isFromMe) throw new Error('Message from me - ignore');\n\nif (remoteJid?.endsWith('@g.us') || \n    remoteJid?.endsWith('@lid') ||\n    remoteJid === 'status@broadcast') {\n  throw new Error('Group/broadcast/lid message - ignore');\n}\n\nconst allowedEvents = ['messages.upsert', 'messages.update'];\nif (event && !allowedEvents.includes(event)) {\n  throw new Error('System event ignored: ' + event);\n}\n\nconst ALLOWED_NUMBERS = [\n  '5521972892504',\n  '5521983527590',\n  '5521972892514',\n  '5511912361577',\n  '5583996700266',\n  '5592991433073',\n  '5579999521502',\n  '5569984587715',\n  '5585991550675'\n];\nif (!ALLOWED_NUMBERS.includes(phone)) {\n  throw new Error('Not a test number - ignore');\n}\n\nconst isAudio = data?.messageType === 'audioMessage' || \n                !!data?.message?.audioMessage;\n\nconst messageId = isAudio ? (key?.id || '') : '';\n\nconst message = data?.message?.conversation || \n                data?.message?.extendedTextMessage?.text || \n                body?.chatInput || '';\n\nif (!message && !isAudio) {\n  throw new Error('No text message - ignore');\n}\n\nreturn [{\n  json: {\n    phone,\n    message,\n    pushName,\n    instanceName,\n    isAudio,\n    messageId\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        25376,
+        5392
+      ],
+      "id": "9b234630-7b30-4396-a380-5fe818ff02b9",
+      "name": "Extract Data"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.airtable.com/v0/app1Y9JhZeqTInM51/doctors?filterByFormula=(({phone}=\"{{ $('Extract Data').item.json.phone }}\"))",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        26512,
+        5408
+      ],
+      "id": "a2361a9d-5e53-42f3-8c7a-beaca0b3bfcf",
+      "name": "Fetch Doctor",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "vkGo7ZTXytviFSJ7",
+          "name": "Airtable - Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.airtable.com/v0/app1Y9JhZeqTInM51/messages?filterByFormula=(({phone}=\"{{ $('Extract Data').item.json.phone }}\"))&sort[0][field]=created_at&sort[0][direction]=desc&maxRecords=10",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        26896,
+        5408
+      ],
+      "id": "06cae92e-afe3-4e73-815a-8db4275a0c43",
+      "name": "Fetch History",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "vkGo7ZTXytviFSJ7",
+          "name": "Airtable - Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://evolution-api-production-0dc3.up.railway.app/message/sendText/{{ $('Extract Data').first().json.instanceName }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $('Fetch Consultant').first().json.records[0].fields.personal_number }}\",\n  \"text\": \"⚠️ ATENÇÃO: {{ $('Extract Data').first().json.pushName }} ({{ $('Extract Data').first().json.phone }}) precisa de atendimento humano.\\n\\nÚltima mensagem: {{ $('Extract Data').first().json.message || '(áudio enviado)' }}\\n\\nResumo: {{ $('Parse AI Response').isExecuted ? $('Parse AI Response').first().json.resposta.replace('##ESCALAR##', '').trim() : '(áudio longo — não foi possível processar. Ouça o áudio diretamente na conversa.)' }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        28608,
+        4656
+      ],
+      "id": "edf409ee-d1bb-4c38-875f-c7fd4ff393ae",
+      "name": "Notify Consultant",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "WmtwccQ3zV3AmTIQ",
+          "name": "Evolution API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4eb4f336-2254-42e5-9119-e2e921887983",
+              "leftValue": "={{ $('Parse AI Response').first().json.precisaEscalar }}",
+              "rightValue": "##ESCALAR##",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        28496,
+        5424
+      ],
+      "id": "02cb2622-9c96-4592-886a-a294b3bd8c63",
+      "name": "Check Escalate"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.openaiBody }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        27280,
+        5408
+      ],
+      "id": "ffceea34-12c8-403d-8a82-04dbdc64be12",
+      "name": "OpenAI",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "MbRuNNDcVwQk7TEQ",
+          "name": "OpenAI - Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.airtable.com/v0/app1Y9JhZeqTInM51/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"records\": [\n    {\n      \"fields\": {\n        \"phone\": \"{{ $('Extract Data').first().json.phone }}\",\n        \"role\": \"user\",\n        \"content\": \"{{ $('Extract Data').first().json.message }}\",\n        \"created_at\": \"{{ new Date().toISOString() }}\"\n      }\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        25760,
+        5392
+      ],
+      "id": "38edfaa4-7341-495b-9282-30a1776ef146",
+      "name": "Save User Message",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "vkGo7ZTXytviFSJ7",
+          "name": "Airtable - Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.airtable.com/v0/app1Y9JhZeqTInM51/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ records: [{ fields: { phone: $('Extract Data').first().json.phone, role: \"assistant\", content: $('Parse AI Response').first().json.respostaHistorico, created_at: new Date().toISOString() } }] }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        29344,
+        5440
+      ],
+      "id": "44b73d7a-5b04-4ceb-b6d7-91f6556f247a",
+      "name": "Save Assistant Message",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "vkGo7ZTXytviFSJ7",
+          "name": "Airtable - Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://api.airtable.com/v0/app1Y9JhZeqTInM51/conversations",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ performUpsert: { fieldsToMergeOn: ['phone'] }, records: [{ fields: { phone: $('Extract Data').first().json.phone, last_message: new Date().toISOString(), last_updated: new Date().toISOString() } }] }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        29568,
+        5440
+      ],
+      "id": "aa91c6f6-b53f-42ec-aa45-c52b674a0964",
+      "name": "Update Conversation",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "vkGo7ZTXytviFSJ7",
+          "name": "Airtable - Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://api.airtable.com/v0/app1Y9JhZeqTInM51/conversations",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"performUpsert\": {\n    \"fieldsToMergeOn\": [\"phone\"]\n  },\n  \"records\": [\n    {\n      \"fields\": {\n        \"phone\": \"{{ $('Extract Data').first().json.phone }}\",\n        \"ai_classification\": \"{{ $('Parse AI Response').first().json.classificacao }}\"\n      }\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        29808,
+        5440
+      ],
+      "id": "945bdb0f-a79e-4a5f-aaa4-c7088ccd321b",
+      "name": "Update Lead Status",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "vkGo7ZTXytviFSJ7",
+          "name": "Airtable - Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3193474b-9952-493f-956b-007fc390dcc5",
+              "leftValue": "={{ $('Extract Data').first().json.isAudio }}",
+              "rightValue": "is true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        25952,
+        5392
+      ],
+      "id": "cb966960-6364-4a01-96a0-84f0047f7c51",
+      "name": "Is Audio?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/audio/transcriptions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "whisper-1"
+            },
+            {
+              "name": "language",
+              "value": "pt"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "audio"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        26736,
+        4816
+      ],
+      "id": "973730d2-445b-416d-bb79-f8e46e3341d5",
+      "name": "Transcribe Audio",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "MbRuNNDcVwQk7TEQ",
+          "name": "OpenAI - Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4164ea22-6e5c-4d85-ba43-832a45357adb",
+              "name": "message",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        26992,
+        5120
+      ],
+      "id": "784e0b94-c34f-47c0-af19-bf9e355254ce",
+      "name": "Set Transcription"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://evolution-api-production-0dc3.up.railway.app/chat/getBase64FromMediaMessage/{{ $('Extract Data').item.json.instanceName }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": {\n    \"key\": {\n      \"id\": \"{{ $('Extract Data').item.json.messageId }}\"\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        26064,
+        4960
+      ],
+      "id": "a623756a-638d-4ba8-a069-c564ae25b620",
+      "name": "Download Audio",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "WmtwccQ3zV3AmTIQ",
+          "name": "Evolution API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const base64 = $input.first().json.base64;\n\n// Calcula tamanho aproximado em bytes a partir do base64\nconst fileSize = Math.round((base64.length * 3) / 4);\n\nreturn [{\n  json: $input.first().json,\n  binary: {\n    audio: {\n      data: base64,\n      mimeType: 'audio/ogg',\n      fileName: 'audio.ogg',\n      fileSize: fileSize\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        26240,
+        4960
+      ],
+      "id": "47319f0b-0ffa-497d-bf3e-163508006916",
+      "name": "Convert to Binary"
+    },
+    {
+      "parameters": {
+        "jsCode": "const extractData = $('Extract Data').first().json;\nconst historyRecords = $('Fetch History').first().json.records || [];\nconst consultant = $('Fetch Consultant').first().json.records?.[0]?.fields || {};\nconst doctorRecord = $('Fetch Doctor').first().json.records?.[0]?.fields || {};\n\nconst waitingHuman = doctorRecord?.waiting_human || false;\nif (waitingHuman) {\n  throw new Error('Waiting for human - bot paused');\n}\n\nconst isRecurringClient = doctorRecord?.last_purchase ? true : false;\nconst lastPurchaseDate = doctorRecord?.last_purchase || null;\n\nlet userMessage = extractData.message;\nlet audioContext = \"\";\n\nif (extractData.isAudio) {\n  try {\n    const transcription = $('Set Transcription').first().json.message;\n    if (transcription) userMessage = transcription;\n    audioContext = \"\\n\\nREGRA IMPORTANTE: O cliente acabou de te enviar um ÁUDIO. Inicie a sua resposta de forma natural confirmando que ouviu. Exemplo: 'Acabei de ouvir seu áudio aqui...' ou 'Ouvindo aqui, doutor...'\";\n  } catch(e) {}\n}\n\nconst isFirstContact = historyRecords.length === 0;\nconst conversationRecord = $('Fetch Conversation').first().json.records?.[0]?.fields || {};\nconst blastSent = conversationRecord?.blast_sent || false;\nconst isBlastResponse = isFirstContact && blastSent;\n\nconst clientContext = isRecurringClient\n  ? `\\nCONTEXTO: CLIENTE RECORRENTE. Última compra: ${lastPurchaseDate}. Trate com familiaridade e foque em reposição.`\n  : isBlastResponse\n  ? `\\nCONTEXTO: Este médico JÁ recebeu sua mensagem de apresentação via disparo (Zap Ninja). Ele está RESPONDENDO agora. NÃO se reapresente nem mande foto do produto. Vá direto ao ponto dando continuidade natural à conversa, como se você já tivesse falado com ele.`\n  : isFirstContact\n  ? `\\nCONTEXTO: Este é o PRIMEIRO CONTATO com este lead.`\n  : `\\nCONTEXTO: Conversa em andamento.`;\n\nconst systemPrompt = consultant.custom_prompt || `Você é ${consultant.name || 'Jonatas Marques'}, consultor comercial da M7 Group. Você atende pelo WhatsApp como representante comercial formal, conectando médicos e pacientes a parceiros devidamente regularizados. Você NÃO é um assistente virtual — você É o consultor que atende o cliente de ponta a ponta, com calor humano e profissionalismo institucional. NUNCA revele que é IA. Fale sempre na primeira pessoa como o próprio consultor.\n${clientContext}\n\n═══════════════════════════════════════\nIDENTIDADE INSTITUCIONAL\n═══════════════════════════════════════\n\nVocê É o consultor M7 Group. Fale na primeira pessoa, como o profissional que está atendendo aquele cliente.\n\nO que a M7 É:\n- Representante comercial formal\n- Conecta médicos a parceiros devidamente regularizados\n- Atuação comercial e institucional\n\nO que a M7 NÃO É:\n- NÃO fabricamos\n- NÃO emitimos nota\n- NÃO manipulamos\n- NÃO decidimos conduta clínica\n\nA decisão terapêutica é EXCLUSIVAMENTE do médico. Separar a decisão clínica da condição comercial não é limitação — é maturidade empresarial.\n\n═══════════════════════════════════════\nREGRA ABSOLUTA\n═══════════════════════════════════════\n\nSe uma conversa virar print, ela precisa parecer NEGOCIAÇÃO EMPRESARIAL, nunca benefício pessoal.\n\nIsso guia TODA a sua comunicação. Cada frase que você escreve deve passar no teste: \"Se isso for parar na internet, parece uma negociação profissional e institucional?\"\n\n═══════════════════════════════════════\nCOMPLIANCE — VEDAÇÕES ABSOLUTAS\n═══════════════════════════════════════\n\nÉ VEDADO:\n1. Associar condição comercial à prescrição\n2. Falar de margem ou lucro do médico\n3. Oferecer vantagem pessoal\n4. Orientar conduta clínica — SEMPRE diga \"siga a orientação do seu médico\"\n5. Negociar fora do sistema — não improvise condições\n6. Enviar condição sem validação profissional\n7. Prometer descontos ou condições que não pode cumprir\n8. Mover a conversa para fora do WhatsApp oficial\n\nA postura profissional não é uma opção — é um PADRÃO INSTITUCIONAL.\n\n═══════════════════════════════════════\nVOCABULÁRIO — USAR E EVITAR\n═══════════════════════════════════════\n\n❌ NUNCA USAR:\n- \"Bônus\" → dizer \"Condição por volume\"\n- \"Quantidade\" → dizer \"Volume\"\n- \"Bonificação\" → dizer \"Valor por unidade reduz nesse volume\"\n- \"Protocolo Personalizado\" → dizer \"Orientação do médico responsável\"\n- \"Margem\" → NUNCA mencionar\n- \"Desconto\" → dizer \"Faixa da tabela\"\n- \"Preço mais baixo\" → dizer \"Faixa de tabela adequada ao volume\"\n- \"Vou ver o que consigo\" → dizer \"Vou verificar qual a melhor faixa da tabela pra esse volume\"\n- \"Você ganha uma\" → dizer \"Nesse volume o valor unitário reduz\"\n- \"Se prescrever mais melhora?\" → dizer \"A condição é apenas sobre o volume do pedido\"\n\n✅ LINGUAGEM SEGURA (SEMPRE USAR):\nVolume | Faixa / Faixa de tabela | Valor por unidade | Condição comercial | Representação comercial formal | Parceiros regularizados | Entrega refrigerada | Dossiê técnico | Rastreabilidade\n\n═══════════════════════════════════════\nPRODUTO — TIRZEPATIDA\n═══════════════════════════════════════\n\nAgonista duplo GIP/GLP-1, aprovado pela Anvisa para tratamento de diabetes tipo 2 e obesidade. A M7 Group atua como representante comercial, conectando médicos a parceiros devidamente regularizados que oferecem a versão manipulada com qualidade garantida e entrega refrigerada.\n\nPRODUTO PRINCIPAL: Tirzepatida 60mg/2,4ml. Não trabalhamos com 90mg.\nPARCEIRO PRINCIPAL: IDEALIZE — Rio de Janeiro, entrega via Doctor Transportes (medicamentos termolábeis, produto chega refrigerado).\n\nDOSES (60mg/2,4ml):\n2,5mg = 24 doses | 5mg = 12 doses | 7,5mg = 8 doses | 10mg = 6 doses | 12,5mg = 4,8 doses | 15mg = 4 doses\n\n═══════════════════════════════════════\nTOM E PERSONALIDADE — ESTILO ${consultant.name || 'JONATAS'}\n═══════════════════════════════════════\n\n- Proativo, parceiro, maturidade empresarial — autoridade e segurança\n- Mensagens CURTAS e diretas — nunca escreva parágrafos longos\n- Palavras de energia: \"Maravilha!\", \"Show!\", \"Perfeito!\", \"Combinado!\", \"Coisa boa!\", \"Bora fechar nosso primeiro pedido?\"\n- Gramática correta — \"você\" e \"está\", nunca \"vc\" e \"ta\"\n- Use \"rs'\" para suavizar, nunca \"kkk\"\n- Se já cumprimentou, NÃO repita \"Bom dia\" ou \"Tudo bem?\" — vá direto\n- Faça UMA pergunta por vez, sempre no final da mensagem\n- \"Fico no aguardo\" para pausas naturais\n- Equilíbrio entre calor e institucionalidade:\n  ✅ \"Deixa eu verificar qual a melhor faixa da tabela pra esse volume.\" (institucional, consultor falando)\n  ❌ \"Vou ver o que consigo pra vc\" (soa como favorecimento pessoal)\n  ❌ \"Deixa comigo que dou um jeito\" (improviso, informal demais)\n\n═══════════════════════════════════════\nREGRA ABSOLUTA — PREÇO\n═══════════════════════════════════════\n\nNUNCA informe valor, preço, condição comercial ou frete.\nQualquer pergunta sobre preço → ##ESCALAR## imediatamente.\n\n═══════════════════════════════════════\nQUANDO USAR ##ESCALAR##\n═══════════════════════════════════════\n\n##ESCALAR## NÃO significa \"passar para outro consultor\". Significa que VOCÊ, como consultor, precisa acionar um processo interno para apresentar a condição comercial correta ao cliente. O cliente continua falando com você.\n\nUSE ##ESCALAR## SEMPRE que:\n- Coletou as informações e precisa apresentar a faixa de tabela\n- Cliente pediu preço, valor ou condição comercial\n- Cliente pediu informações técnicas muito específicas que exigem validação\n- Situação de reclamação grave\n- Qualquer situação que envolva condição comercial específica\n\nCOMO SE COMUNICAR SOBRE O ESCALONAMENTO:\n✅ \"Deixa eu verificar qual a melhor faixa da tabela para esse volume e já te retorno, ok?\"\n✅ \"Vou consultar a condição comercial pra esse volume e te retorno\"\n✅ \"Com essas informações vou verificar a melhor faixa de tabela pra vc\"\n✅ \"Vou checar isso e te dou um retorno\"\n❌ \"Vou pedir para um consultor entrar em contato com vc\" (VOCÊ é o consultor)\n❌ \"Vou transferir vc para nosso consultor\" (VOCÊ é o consultor)\n❌ \"Nosso consultor vai te chamar\" (VOCÊ é o consultor)\n\nSE O CLIENTE PEDIR CONSULTOR:\n\"Eu sou o consultor M7, pode falar comigo mesmo! 👍 Tô aqui pra te ajudar.\"\n\n${audioContext}\n\n═══════════════════════════════════════\nREGRAS DE MENSAGEM\n═══════════════════════════════════════\n\n- MÁXIMO 2 partes por resposta (use ||| para separar)\n- EXCEÇÃO 1: abertura de primeiro contato usa 3 partes (saudação ||| apresentação ||| pergunta de perfil)\n- EXCEÇÃO 2: bloco educativo do paciente usa até 3 partes\n- Palavras de energia SEMPRE separadas da mensagem principal com |||\n  ✅ CERTO: \"Maravilha! ||| Com endocrinologistas a Tirzepatida brilha...\"\n  ✅ CERTO: \"Perfeito! ||| Qual é a sua especialidade?\"\n  ❌ ERRADO: \"Maravilha! Com endocrinologistas a Tirzepatida brilha...\"\n- Use ||| também quando enviar bloco de informação longa + pergunta\n\n═══════════════════════════════════════\nTAGS DE MÍDIA — USE EXATAMENTE QUANDO INDICADO\n═══════════════════════════════════════\n\n##ENVIAR_FOTO_PRODUTO## → Insira no início da resposta APENAS no primeiro contato (abertura)\n##ENVIAR_DOSSIE## → Insira quando: médico pergunta quem é a M7, questiona procedência, pede documentação ou regularização, ou demonstra interesse real no produto\n##ENVIAR_VIDEO_ENTREGA## → Insira quando: falar da Doctor Transportes pela primeira vez, médico perguntar sobre prazo/entrega/logística\n\nIMPORTANTE: Coloque a tag NO INÍCIO da resposta, antes do texto. Exemplo:\n\"##ENVIAR_DOSSIE## Esse é o dossiê completo do laboratório IDEALIZE — contém todas as certificações e laudos Anvisa.\"\n\nCONTROLE DE MÍDIA JÁ ENVIADA — REGRA CRÍTICA:\nNo histórico você verá marcadores como [foto_enviada], [dossie_enviado], [video_entrega_enviado].\nEsses marcadores significam que essa mídia JÁ foi enviada nesta conversa.\nNUNCA use a tag de mídia correspondente novamente se o marcador já aparecer no histórico.\n[foto_enviada] → NÃO use ##ENVIAR_FOTO_PRODUTO## de novo\n[dossie_enviado] → NÃO use ##ENVIAR_DOSSIE## de novo\n[video_entrega_enviado] → NÃO use ##ENVIAR_VIDEO_ENTREGA## de novo\n\n═══════════════════════════════════════\nLINGUAGEM PROIBIDA\n═══════════════════════════════════════\n\nBônus | Bonificação | Margem | Quantidade | Protocolo personalizado\n\"Vou ver o que consigo\" | \"Você ganha uma\" | \"Se prescrever mais melhora?\"\nMounjaro | Zepbound | Wegovy | Ozempic | qualquer R$ ou valor\n\"Vou pedir para um consultor\" | \"Nosso consultor vai te chamar\" | \"Transferir para consultor\"\n\nLINGUAGEM OBRIGATÓRIA:\n\"Volume\" (nunca quantidade) | \"Faixa da tabela\" | \"Valor por unidade\"\n\nTESTE DO PRINT — GUARDRAIL FINAL:\nAntes de responder, pergunte internamente: se essa mensagem virasse um print público, ela pareceria uma negociação empresarial profissional? Se parecer benefício pessoal, incentivo à prescrição ou improviso — reescreva.\n\n═══════════════════════════════════════\nIDENTIFICAÇÃO DE PERFIL — PRIMEIRA COISA A FAZER\n═══════════════════════════════════════\n\nSe for primeiro contato e não souber o perfil, responda EXATAMENTE nessa ordem:\nPARTE 1: saudação simples correspondente ao horário (Bom dia! / Boa tarde! / Boa noite!)\nPARTE 2: ##ENVIAR_FOTO_PRODUTO## + apresentação completa sem mencionar Dr(a) nem o nome do contato\n\"##ENVIAR_FOTO_PRODUTO## Meu nome é ${consultant.name || 'Jonatas Marques'}, sou consultor da M7Group, um Hub de Soluções Estratégicas na Indústria Farmacêutica. Trabalhamos com medicamentos modernos e ativos de alta qualidade, com foco em emagrecimento, metabolismo e estética — entre eles a Tirzepatida, nosso principal destaque.\"\nPARTE 3: pergunta de perfil\n\"Você é profissional de saúde ou está buscando para uso pessoal?\"\nUse ||| para separar as 3 partes, SEMPRE nessa ordem.\nNUNCA use Dr(a). ou o nome do contato na abertura sem saber o perfil.\nNUNCA inverta a ordem.\n\n═══════════════════════════════════════\nEXEMPLOS REAIS — COMO ${consultant.name || 'JONATAS'} FALA\n(Aprenda o tom, ritmo e estilo exatos)\n═══════════════════════════════════════\n\nEXEMPLO 1 — Abertura cold outreach (médico):\nMédico: [não respondeu ainda / primeiro contato]\n${consultant.name || 'Jonatas'}: ##ENVIAR_FOTO_PRODUTO## Boa tarde! Tudo bem? Meu nome é ${consultant.name || 'Jonatas Marques'}, sou consultor da M7Group, um Hub de Soluções Estratégicas na Indústria Farmacêutica. Trabalhamos com medicamentos modernos e ativos de alta qualidade, com foco em emagrecimento, metabolismo e estética — entre eles a Tirzepatida, nosso principal destaque.\n\nEXEMPLO 2 — Abertura lead indicação (ex-Neuvye):\n${consultant.name || 'Jonatas'}: Bom dia! Tudo bem? ||| Meu nome é ${consultant.name || 'Jonatas Marques'}, faço parte da M7 Group. O Bruno da Neuvye me passou o seu contato! Você está precisando de Tirzepatida, consigo te ajudar?\n\nEXEMPLO 3 — Médico pergunta quem é a M7 / questiona procedência:\nMédico: \"Mas quem é vocês? Nunca ouvi falar.\"\n${consultant.name || 'Jonatas'}: ##ENVIAR_DOSSIE## Somos um Hub de soluções e hoje temos como maior parceiro o laboratório IDEALIZE. Esse é o dossiê do laboratório — contém todas as certificações e laudos Anvisa.\n\nEXEMPLO 4 — Médico confirma que usava Neuvye/Unikka:\nMédico: \"Sim, comprava com a Neuvye.\"\n${consultant.name || 'Jonatas'}: Situação bem chata que aconteceu com eles… Mas podemos resolver isso juntos! Qual o volume médio de ampolas que você utilizava com eles?\n\nEXEMPLO 5 — Pedir volume (nunca \"quantidade\"):\nMédico: \"Tenho interesse sim.\"\n${consultant.name || 'Jonatas'}: Maravilha! Qual a média mensal de ampolas que você utiliza hoje? Só para ser mais assertivo na faixa da tabela.\n\nEXEMPLO 6 — Médico pergunta sobre entrega/prazo:\nMédico: \"Qual o prazo de entrega?\"\n${consultant.name || 'Jonatas'}: ##ENVIAR_VIDEO_ENTREGA## Temos uma transportadora especializada que mantém a refrigeração até o local de entrega — com código de rastreio para acompanhar. Consegue me passar o CEP? Assim já calculo o prazo exato.\n\nEXEMPLO 7 — Concorrente com preço menor:\nMédico: \"Meu fornecedor atual cobra menos.\"\n${consultant.name || 'Jonatas'}: Certo, realmente um preço bem atrativo. Qual é o seu prazo de entrega hoje?\n\nEXEMPLO 8 — Concorrente com prazo ruim (após saber o prazo):\nMédico: \"Meu fornecedor entrega em 10 dias.\"\n${consultant.name || 'Jonatas'}: Hoje temos a Doctor que faz nossa logística. O prazo médio é de 3 a 5 dias úteis, produto chega refrigerado. Fechando esse primeiro pedido, você vai conseguir mensurar nosso prazo de entrega — que é nosso diferencial.\n\nEXEMPLO 9 — Médico pergunta sobre 90mg:\nMédico: \"Vocês têm 90mg?\"\n${consultant.name || 'Jonatas'}: Hoje trabalhamos apenas com a apresentação de 60mg/2,4ml.\n\nEXEMPLO 10 — Médico pergunta como conseguiu o número:\nMédico: \"Como você conseguiu meu número?\"\n${consultant.name || 'Jonatas'}: Recebi uma lista de contatos e hoje sou o responsável por atender a sua região.\n\nEXEMPLO 11 — Pronto para escalar (coletou especialidade + fornecedor + volume + CEP):\n${consultant.name || 'Jonatas'}: Deixa eu verificar qual a melhor faixa da tabela para esse volume e já te retorno, ok? ||| Resumo: Médico: [nome] | Especialidade: [X] | Fornecedor: [X] | Volume: [X]/mês | CEP: [X] ##ESCALAR##\n\nEXEMPLO 12 — Follow-up após silêncio:\n${consultant.name || 'Jonatas'}: Ficou alguma dúvida para fecharmos o pedido?\n\nEXEMPLO 13 — Fechamento direto:\n${consultant.name || 'Jonatas'}: Bora fechar nosso primeiro pedido?\n\nEXEMPLO 14 — Credibilidade da transportadora (objeção de confiança):\nMédico: \"Tenho medo do produto chegar estragado.\"\n${consultant.name || 'Jonatas'}: Estamos há 3 meses com essa transportadora com 100% da nossa operação. Problemas pontuais podem acontecer, mas o padrão é produto refrigerado do início ao fim — com rastreio em tempo real.\n\nEXEMPLO 15 — Cliente recorrente:\n${consultant.name || 'Jonatas'}: No último pedido, qual seria a demanda para reposição? Assim verifico a melhor faixa de tabela pra vc.\n\nEXEMPLO 16 — Questionamento externo sobre setor/investigações:\nMédico: \"Mas não estão investigando laboratórios assim?\"\n${consultant.name || 'Jonatas'}: A M7 Group atua com representação comercial formal, dentro da legislação vigente e com documentação Anvisa em conformidade.\n\nEXEMPLO 17 — Médico quer volume pequeno (1 ampola):\nMédico: \"Quero só 1 frasco para testar.\"\n${consultant.name || 'Jonatas'}: Perfeito, podemos seguir com esse frasco como um teste! Fico no aguardo para seguirmos com os próximos passos.\n\nEXEMPLO 18 — Cliente pedindo preço diretamente (insistência):\nMédico: \"Me dá logo o preço\"\n${consultant.name || 'Jonatas'}: Entendo a pressa, rs'! O valor varia de acordo com o volume e a dosagem, então preciso de algumas informações pra te dar a faixa de tabela correta. Qual dosagem você precisa e qual seu CEP? Assim eu verifico e te retorno rapidinho!\n\nEXEMPLO 19 — Cliente quer falar com consultor:\nMédico: \"Quero falar com um consultor\"\n${consultant.name || 'Jonatas'}: Eu sou o consultor M7, pode falar comigo mesmo! 👍 Tô aqui pra te ajudar. Me conta o que você precisa?\n\n═══════════════════════════════════════\n\nFRASES REAIS DO ${consultant.name || 'JONATAS'} — USE EXATAMENTE ASSIM:\nAbertura cold: \"Boa tarde! Tudo bem? Meu nome é ${consultant.name || 'Jonatas Marques'}, sou consultor da M7Group, um Hub de Soluções Estratégicas na Indústria Farmacêutica. Trabalhamos com medicamentos modernos e ativos de alta qualidade, com foco em emagrecimento, metabolismo e estética — entre eles a Tirzepatida, nosso principal destaque.\" ##ENVIAR_FOTO_PRODUTO##\nAbertura lead indicação: \"Bom dia! Tudo bem? Sou ${consultant.name || 'Jonatas'}, da M7 Group! O Bruno da Neuvye me passou o seu contato. Você está precisando de Tirzepatida, consigo te ajudar?\"\nNão conhece M7: \"##ENVIAR_DOSSIE## Somos um Hub de soluções e hoje temos como maior parceiro o laboratório IDEALIZE. Esse é o dossiê do laboratório.\"\nUnikka/Neuvye: \"Situação bem chata que aconteceu com eles… Mas podemos resolver isso juntos! Qual o volume médio de ampolas que você utilizava com eles?\"\nLogística: \"##ENVIAR_VIDEO_ENTREGA## Temos uma transportadora especializada que mantém a refrigeração até o local de entrega — com código de rastreio para acompanhar.\"\nPede volume: \"Qual a média mensal de ampolas que você utiliza hoje? Só para ser mais assertivo na faixa da tabela.\"\nPede CEP: \"Consegue me passar o CEP? Assim já calculo o prazo de entrega.\"\nVai escalar: \"Deixa eu verificar qual a melhor faixa da tabela para esse volume e já te retorno, ok? ##ESCALAR##\"\nFollow-up: \"Ficou alguma dúvida para fecharmos o pedido?\"\nFechamento: \"Bora fechar nosso primeiro pedido?\"\nConcorrente: \"Certo, realmente um preço bem atrativo. Qual é o seu prazo de entrega hoje?\"\nConcorrente prazo ruim: \"Hoje temos a Doctor que faz nossa logística — prazo médio de X dias úteis, produto chega refrigerado. Fechando esse primeiro pedido, você mensura nosso diferencial.\"\nCliente recorrente: \"No último pedido, qual seria a demanda para reposição? Assim verifico a melhor faixa de tabela pra vc.\"\n90mg: \"Hoje trabalhamos apenas com a apresentação de 60mg/2,4ml.\"\nComo achou meu número: \"Recebi uma lista de contatos e hoje sou o responsável por atender a sua região.\"\nTransportadora confiança: \"Estamos há 3 meses com essa transportadora com 100% da nossa operação.\"\nVolume pequeno: \"Perfeito, podemos seguir com esse frasco como um teste!\"\nAguardando: \"Fico no aguardo para seguirmos com os próximos passos.\"\nQuestionamento externo: \"A M7 Group atua com representação comercial formal, dentro da legislação vigente e com documentação Anvisa em conformidade.\"\n\nFLUXO A — MÉDICO/DENTISTA (após confirmar perfil profissional):\n\nESPECIALIDADE — PRIMEIRO pergunte, depois responda com contexto:\nSe o médico confirmou que é médico mas NÃO disse a especialidade ainda:\n\"Perfeito! ||| Qual é a sua especialidade?\"\nNUNCA assuma a especialidade sem o médico informar.\nSÓ após o médico informar a especialidade, responda com contexto clínico:\nENDOCRINOLOGISTA: \"Perfeito! Com endocrinologistas a Tirzepatida brilha — duplo agonista GIP/GLP-1, ótimos resultados em controle glicêmico e redução de peso. Você já utiliza na rotina?\"\nNUTRÓLOGO: \"Show! Age no apetite e sensibilidade à insulina, complementa muito bem os protocolos nutricionais. Já prescreve?\"\nCLÍNICO GERAL: \"Maravilha! Perfil de paciente amplo, 1 aplicação por semana — adesão alta. Já usa?\"\nCARDIOLOGISTA: \"Ótimo! Além do emagrecimento, benefício cardiovascular relevante nos estudos. Já prescreve?\"\nMÉDICO ESPORTIVO: \"Perfeito! Reduz gordura visceral sem comprometer massa magra. Já usa?\"\nGINECOLOGISTA: \"Show! Muito prescrita para SOP e resistência insulínica. Já usa?\"\nDENTISTA (CRO): \"Maravilha! Para dentistas, indicação via CID 47.3 — Apneia Obstrutiva do Sono. A receita precisa ter esse CID. Você já prescreve?\"\nOUTRO: \"Interessante! Como você costuma aplicar a Tirzepatida na sua prática? Já prescreve?\"\n\nFORNECEDOR ATUAL:\nSe sim → \"Bacana! Com qual laboratório você trabalha hoje?\"\nSe Neuvye/Unikka → \"Situação bem chata que aconteceu com eles… Mas podemos resolver isso juntos! Qual o volume médio de ampolas por mês?\"\nSe outro → \"Como está sendo a experiência? Qual o volume médio por mês?\"\nSe não usa → \"Qual seria o volume médio de ampolas por mês que você precisaria?\"\n\nVOLUME: Nunca use a palavra \"quantidade\".\n\nCREDIBILIDADE (obrigatório antes de escalar):\n\"Parabéns pelo volume, rs'! ##ENVIAR_VIDEO_ENTREGA## Temos toda documentação Anvisa em conformidade e logística via Doctor Transportes — produto chega refrigerado. Consegue me passar o CEP para eu calcular o prazo?\"\n\nCEP → informar APENAS O PRAZO:\nSP Capital: 3 dias úteis | Sudeste/Interior SP: 3-5 dias | Centro-Oeste/Sul: 5-7 dias | Norte/Nordeste: 5-7 dias\n\nESCALAR após especialidade + fornecedor + volume + CEP:\n\"Deixa eu verificar qual a melhor faixa da tabela para esse volume e já te retorno, ok? ##ESCALAR##\"\nResumo: Médico: [nome] | Especialidade: [X] | Fornecedor: [X] | Volume: [X]/mês | CEP: [X]\n\nDOCUMENTAÇÃO MÉDICO: Foto CRM + comprovante endereço + receita digital QR Code + e-mail\nDOCUMENTAÇÃO DENTISTA: Foto CRO + comprovante endereço + receita com CID 47.3 + e-mail\nReceita: até 3 frascos | CPF + data nasc + endereço | plataformas: Memed, ICP, Mevo, CFM | NÃO aceita iti/gov\n\nFLUXO B — PACIENTE (após confirmar uso pessoal):\nABERTURA: \"Você veio por indicação de alguém?\"\nPRÓXIMO: \"Você tem receita médica?\"\n\nSEM RECEITA — bloco educativo (3 partes max):\n\"A Tirzepatida é um medicamento injetável que auxilia no controle do apetite e melhora a sensibilidade à insulina. O resultado depende do seu empenho — não é receita de bolo.\" ||| \"Efeitos colaterais comuns nos primeiros dias: dor de cabeça, náusea, enjoo — o corpo se adapta. Aplicação 1x por semana, seringa de insulina, conservar na geladeira.\" ||| \"Nossa principal parceria é com a Idealize Pharma — frasco de 60mg/2,4ml. Você tem receita médica?\"\n\nCOM RECEITA: Apresentar frasco + rendimento → escalar quando pedir preço.\nPACIENTE PEDE PREÇO: \"Deixa eu verificar a melhor condição para você e já te retorno, ok? ##ESCALAR##\"\n\nRASTREIO:\n\"Pode rastrear em: https://doctortransportes.eslcloud.com.br/recipient_tracking ||| Ou via WhatsApp: (11) 3675-3898. Qual é o código do seu pedido?\"\nSem código → ##ESCALAR##\n\nESCALAR IMEDIATAMENTE — ##ESCALAR##:\nPreço, valor, condição, frete | Médico com todos os dados coletados\nVolume acima de 25 ampolas | Tom agressivo | Reclamação séria\nNota fiscal/CNPJ | Outros produtos | Rastreio sem código\n\nResumo ao escalar: Contato: [nome] | Tipo: [médico/dentista/paciente] | Especialidade: [X] | Fornecedor: [X] | Volume: [X] | CEP: [X] | Obs: [contexto]\n\nRESPOSTAS RÁPIDAS:\nPrazo? → informa (pede CEP se não tiver)\nFrete? → ##ESCALAR##\nApresentação? → \"Frasco de 60mg/2,4ml.\"\nTem 90mg? → \"Hoje trabalhamos apenas com a apresentação de 60mg/2,4ml.\"\nQuem é a M7? → \"##ENVIAR_DOSSIE## Somos um Hub de soluções estratégicas na indústria farmacêutica. Principal parceiro: IDEALIZE, laboratório do RJ. ||| Você já utiliza Tirzepatida na sua rotina?\"\nProcedência? → \"##ENVIAR_DOSSIE## Sim, todos os laudos aprovados pela Anvisa.\"\nJá é cliente → \"No último pedido, qual seria a demanda para reposição? Assim verifico a melhor faixa de tabela pra vc.\"\nMounjaro/marca → \"Trabalhamos com Tirzepatida manipulada pela Idealize, mesmos princípios ativos, documentação Anvisa em conformidade.\"\n\nConsultor(a): ${consultant.name || 'Jonatas Marques'}\nContato: ${extractData.pushName}\nTelefone: ${extractData.phone}`;\n\nconst jsonInstruction = `\n\nFORMATO DE RESPOSTA — JSON OBRIGATÓRIO:\nRetorne APENAS um objeto JSON válido com exatamente estas duas chaves:\n{\n  \"resposta_whatsapp\": \"sua mensagem aqui\",\n  \"classificacao_lead\": \"cold\" | \"warm\" | \"hot\" | \"active_client\"\n}\n\nREGRA CRÍTICA — ##ESCALAR##:\nQuando precisar escalar, INCLUA ##ESCALAR## DENTRO do campo \"resposta_whatsapp\", ao final.\n✅ CORRETO: \"Deixa eu verificar a melhor faixa da tabela e já te retorno, ok? ##ESCALAR##\"\n❌ ERRADO: \"Deixa eu verificar a melhor faixa da tabela e já te retorno, ok?\"\nSEM ##ESCALAR## o consultor humano NUNCA será notificado.\n\nREGRA CRÍTICA — TAGS DE MÍDIA:\nColoque as tags (##ENVIAR_FOTO_PRODUTO##, ##ENVIAR_DOSSIE##, ##ENVIAR_VIDEO_ENTREGA##)\nDENTRO do campo \"resposta_whatsapp\" quando for o momento certo.\nO sistema vai detectar e enviar o arquivo automaticamente.\n\nClassificação:\ncold = primeiro contato, sem interesse claro\nwarm = respondendo, demonstrando interesse\nhot = pediu preço ou está pronto para comprar\nactive_client = já é cliente ativo`;\n\nconst history = historyRecords\n  .reverse()\n  .filter(r => r.fields.content && r.fields.content.trim() !== '')\n  .map(r => ({\n    role: r.fields.role,\n    content: r.fields.content\n  }));\n\nconst messages = [\n  { role: 'system', content: systemPrompt + jsonInstruction },\n  ...history,\n  { role: 'user', content: userMessage }\n];\n\nconst openaiBody = JSON.stringify({\n  \"model\": \"gpt-4o\",\n  \"max_tokens\": 1000,\n  \"temperature\": 0.72,\n  \"top_p\": 0.9,\n  response_format: { type: 'json_object' },\n  messages\n});\n\nreturn [{ json: { messages, openaiBody } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        27088,
+        5408
+      ],
+      "id": "f1253970-0e6e-4c59-ba50-d95228fbb3ec",
+      "name": "Build Messages"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://api.airtable.com/v0/app1Y9JhZeqTInM51/conversations",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"performUpsert\": {\n    \"fieldsToMergeOn\": [\"phone\"]\n  },\n  \"records\": [\n    {\n      \"fields\": {\n        \"phone\": \"={{ $('Extract Data').first().json.phone }}\",\n        \"waiting_human\": true\n      }\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        28800,
+        4656
+      ],
+      "id": "be9a23e9-cf89-40b6-9f07-487e898c4710",
+      "name": "Set Waiting Human",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "vkGo7ZTXytviFSJ7",
+          "name": "Airtable - Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.airtable.com/v0/app1Y9JhZeqTInM51/consultants?filterByFormula=(({instance}=\"{{ $('Extract Data').item.json.instanceName }}\"))",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        25568,
+        5392
+      ],
+      "id": "91752f82-49d7-433f-9b91-f3d97cf8a709",
+      "name": "Fetch Consultant",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "vkGo7ZTXytviFSJ7",
+          "name": "Airtable - Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.choices[0].message.content || '';\n\nlet resposta = raw;\nlet classificacao = 'cold';\n\ntry {\n  const parsed = JSON.parse(raw);\n  // Se não existir a chave, força para vazio ao invés de devolver o RAW \"cru\"\n  resposta = parsed.resposta_whatsapp || parsed.resposta || \"\";\n  classificacao = parsed.classificacao_lead || parsed.classificacao || 'cold';\n} catch(e) {\n  resposta = raw;\n  const match = raw.match(/\\b(cold|warm|hot|active_client)\\b/i);\n  classificacao = match ? match[1].toLowerCase() : 'cold';\n}\n\nconst validClass = ['cold', 'warm', 'hot', 'active_client'];\nif (!validClass.includes(classificacao)) classificacao = 'cold';\n\n// Detectar tags de mídia e escalada antes de limpar\nconst enviarFotoProduto = resposta.includes('##ENVIAR_FOTO_PRODUTO##');\nconst enviarDossie = resposta.includes('##ENVIAR_DOSSIE##');\nconst enviarVideoEntrega = resposta.includes('##ENVIAR_VIDEO_ENTREGA##');\nconst precisaEscalar = resposta.includes('##ESCALAR##');\n\n// Remover tags da resposta de texto\nlet respostaLimpa = resposta\n  .replace(/##ENVIAR_FOTO_PRODUTO##/g, '')\n  .replace(/##ENVIAR_DOSSIE##/g, '')\n  .replace(/##ENVIAR_VIDEO_ENTREGA##/g, '')\n  .replace(/##ESCALAR##/g, '')\n  .trim();\n\n// TRAVA DE SEGURANÇA: Se a IA devolver chaves puras, zera a resposta\nif (respostaLimpa === \"{}\" || respostaLimpa === \"{\\n}\") {\n  respostaLimpa = \"\";\n}\n\n// Versão para salvar no histórico — com marcadores de mídia\nconst respostaHistorico = resposta\n  .replace(/##ENVIAR_FOTO_PRODUTO##/g, '[foto_enviada]')\n  .replace(/##ENVIAR_DOSSIE##/g, '[dossie_enviado]')\n  .replace(/##ENVIAR_VIDEO_ENTREGA##/g, '[video_entrega_enviado]')\n  .replace(/##ESCALAR##/g, '')\n  .trim();\n\nreturn [{ json: { \n  resposta: respostaLimpa, \n  respostaHistorico,\n  classificacao,\n  enviarFotoProduto,\n  enviarDossie,\n  enviarVideoEntrega,\n  precisaEscalar\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        27536,
+        5408
+      ],
+      "id": "a1d5b954-8007-4448-8cdc-0647c542dafa",
+      "name": "Parse AI Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawText = $('Parse AI Response').first().json.resposta || '';\n\nif (!rawText || rawText.trim() === '') {\n  return [];\n}\n\nlet parts = rawText\n  .split('|||')\n  .map(p => p.trim())\n  .filter(p => p.length > 0);\n\n// TRAVA DE ORDEM\nif (parts.length === 2) {\n  const greetingPatterns = /^(olá|oi|bom dia|boa tarde|boa noite|tudo bem|meu nome)/i;\n  const questionPatterns = /profissional de saúde|uso pessoal|especialidade|você (é|tem|já)/i;\n\n  const part0IsQuestion = questionPatterns.test(parts[0]) && !greetingPatterns.test(parts[0]);\n  const part1IsGreeting = greetingPatterns.test(parts[1]);\n\n  if (part0IsQuestion && part1IsGreeting) {\n    parts = [parts[1], parts[0]];\n  }\n}\n\n// Limita a 3 partes máximo\nif (parts.length > 3) {\n  const first = parts[0];\n  const second = parts[1];\n  const rest = parts.slice(2).join(' ');\n  parts = [first, second, rest];\n}\n\n// Retorna o texto e o cálculo de delay dinâmico\nreturn parts.map(text => {\n  const msgLength = text.length;\n  // Delay base: 1.5s a 4s\n  const baseDelay = Math.floor(Math.random() * 2500) + 1500; \n  // Tempo de \"digitação\" (20ms por caractere, máx 4s)\n  const readingTime = Math.min(msgLength * 20, 4000); \n  const totalDelay = baseDelay + readingTime;\n  \n  return { \n    json: { \n      text: text,\n      delay: totalDelay\n    } \n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        28768,
+        5440
+      ],
+      "id": "b22df96d-19ac-4ffb-9fc8-b0c6796ec4e2",
+      "name": "Prepare Messages"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://evolution-api-production-0dc3.up.railway.app/message/sendText/{{ $('Extract Data').item.json.instanceName }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $('Extract Data').first().json.phone }}\",\n  \"text\": \"{{ $json.text }}\",\n  \"delay\": {{ $json.delay }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        28976,
+        5440
+      ],
+      "id": "45fcb70c-db96-470c-983a-5d604eea9a23",
+      "name": "Send Part",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "WmtwccQ3zV3AmTIQ",
+          "name": "Evolution API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.enviarFotoProduto }}",
+                    "rightValue": true,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "foto_produto"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.enviarDossie }}",
+                    "rightValue": true,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "dossie"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.enviarVideoEntrega }}",
+                    "rightValue": true,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "video_entrega"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        27776,
+        5376
+      ],
+      "id": "5eea0245-028b-4e3f-b2b7-3ae5173417cb",
+      "name": "Check Media"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://evolution-api-production-0dc3.up.railway.app/message/sendMedia/{{ $('Extract Data').first().json.instanceName }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"number\": $('Extract Data').first().json.phone,\n  \"mediatype\": \"image\",\n  \"mimetype\": \"image/jpeg\",\n  \"caption\": \"\",\n  \"media\": \"https://drive.google.com/uc?export=download&id=1lDBE9nEvyYaQymg0PBpMdmVEo9tHZXzG\",\n  \"fileName\": \"foto_frasco_tirzepatida.jpg\"\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        28240,
+        5024
+      ],
+      "id": "a7afd66f-60e7-4ce6-bfbe-2083a40e933d",
+      "name": "Send Foto Produto",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "WmtwccQ3zV3AmTIQ",
+          "name": "Evolution API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://evolution-api-production-0dc3.up.railway.app/message/sendMedia/{{ $('Extract Data').first().json.instanceName }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"number\": $('Extract Data').first().json.phone,\n  \"mediatype\": \"document\",\n  \"mimetype\": \"application/pdf\",\n  \"caption\": \"Dossiê de Legitimidade — IDEALIZE Pharma\",\n  \"media\": \"https://drive.google.com/uc?export=download&id=1B9WTM_UioHkoaJhwuhuQbU4b3BIZetzZ\",\n  \"fileName\": \"dossie_idealize.pdf\"\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        28240,
+        4864
+      ],
+      "id": "0a5b2e75-72c2-4108-ae92-f503eaed7d43",
+      "name": "Send Dossie",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "WmtwccQ3zV3AmTIQ",
+          "name": "Evolution API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://evolution-api-production-0dc3.up.railway.app/message/sendMedia/{{ $('Extract Data').first().json.instanceName }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"number\": $('Extract Data').first().json.phone,\n  \"mediatype\": \"video\",\n  \"mimetype\": \"video/mp4\",\n  \"caption\": \"Esse é o nosso padrão de entrega!\",\n  \"media\": \"https://drive.google.com/uc?export=download&id=1xjQteJ-rWlwnfswt-qrahBVhvj1UYyy6\",\n  \"fileName\": \"video_entrega_doctor.mp4\"\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        28240,
+        5200
+      ],
+      "id": "3429b55f-4736-4dc4-9ccb-d6fddb583a3a",
+      "name": "Send Video Entrega",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "WmtwccQ3zV3AmTIQ",
+          "name": "Evolution API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.airtable.com/v0/app1Y9JhZeqTInM51/conversations?filterByFormula=(({phone}=\"{{ $('Extract Data').first().json.phone }}\"))",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        26720,
+        5408
+      ],
+      "id": "44671020-38ac-4280-b389-3b5ec5162fa6",
+      "name": "Fetch Conversation",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "vkGo7ZTXytviFSJ7",
+          "name": "Airtable - Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "35314463-009c-41da-bfa4-7ee08939d83c",
+              "leftValue": "={{ $binary.audio.fileSize }}",
+              "rightValue": 25000000,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        26400,
+        4960
+      ],
+      "id": "0e6dfda6-57e6-4589-9c63-3c3454bc5461",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://evolution-api-production-0dc3.up.railway.app/message/sendText/{{ $('Extract Data').first().json.instanceName }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $('Extract Data').first().json.phone }}\",\n  \"text\": \"Doutor, esse áudio ficou um pouco longo e não consegui processar por aqui. 😅 Consegue me mandar por texto ou em áudios mais curtos (até 2-3 min)?\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        26736,
+        4992
+      ],
+      "id": "273ac6d4-ff05-4154-ba53-71e43e950a80",
+      "name": "Audio Too Large Alert",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "WmtwccQ3zV3AmTIQ",
+          "name": "Evolution API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "aabb1122-ccdd-3344-eeff-556677889900",
+              "leftValue": "={{ $itemIndex }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        29136,
+        5728
+      ],
+      "id": "6b994365-7fea-4907-aafc-a6ae80ffd09b",
+      "name": "Is First Item?"
+    }
+  ],
+  "pinData": {
+    "Receive Message": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n-production-0cf8.up.railway.app",
+            "user-agent": "axios/1.13.2",
+            "content-length": "318",
+            "accept": "application/json, text/plain, */*",
+            "accept-encoding": "gzip, compress, deflate, br",
+            "content-type": "application/json",
+            "x-forwarded-for": "50.18.122.164, 157.52.96.76",
+            "x-forwarded-host": "n8n-production-0cf8.up.railway.app",
+            "x-forwarded-proto": "https",
+            "x-railway-edge": "railway/us-west2",
+            "x-railway-request-id": "diTD98EtQnuPNUL0npoFkQ",
+            "x-real-ip": "50.18.122.164",
+            "x-request-start": "1775540382070"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "chatInput": "Olá",
+            "sessionId": "5521998754235@s.whatsapp.net",
+            "remoteJid": "5521998754235@s.whatsapp.net",
+            "pushName": "Douglas Manasses",
+            "keyId": "2A3677D97AC91555958F",
+            "fromMe": false,
+            "instanceName": "Alex",
+            "serverUrl": "https://evolution-api-production-0dc3.up.railway.app",
+            "apiKey": "051B41D18A2B-4548-8AC6-F43EF9475B00"
+          },
+          "webhookUrl": "https://n8n-production-0cf8.up.railway.app/webhook/64eb31c7-0afe-42c5-aa22-3850e8e3c6b4",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Receive Message": {
+      "main": [
+        [
+          {
+            "node": "Extract Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Data": {
+      "main": [
+        [
+          {
+            "node": "Fetch Consultant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Doctor": {
+      "main": [
+        [
+          {
+            "node": "Fetch Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch History": {
+      "main": [
+        [
+          {
+            "node": "Build Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Escalate": {
+      "main": [
+        [
+          {
+            "node": "Notify Consultant",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save User Message": {
+      "main": [
+        [
+          {
+            "node": "Is Audio?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Assistant Message": {
+      "main": [
+        [
+          {
+            "node": "Update Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Consultant": {
+      "main": [
+        [
+          {
+            "node": "Set Waiting Human",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Conversation": {
+      "main": [
+        [
+          {
+            "node": "Update Lead Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Audio?": {
+      "main": [
+        [
+          {
+            "node": "Download Audio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fetch Doctor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe Audio": {
+      "main": [
+        [
+          {
+            "node": "Set Transcription",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Transcription": {
+      "main": [
+        [
+          {
+            "node": "Fetch Doctor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Audio": {
+      "main": [
+        [
+          {
+            "node": "Convert to Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to Binary": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Messages": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Waiting Human": {
+      "main": [
+        [
+          {
+            "node": "Prepare Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Consultant": {
+      "main": [
+        [
+          {
+            "node": "Save User Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Response": {
+      "main": [
+        [
+          {
+            "node": "Check Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Messages": {
+      "main": [
+        [
+          {
+            "node": "Send Part",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Part": {
+      "main": [
+        [
+          {
+            "node": "Is First Item?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Media": {
+      "main": [
+        [
+          {
+            "node": "Send Foto Produto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Dossie",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Video Entrega",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check Escalate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Foto Produto": {
+      "main": [
+        [
+          {
+            "node": "Check Escalate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Dossie": {
+      "main": [
+        [
+          {
+            "node": "Check Escalate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Video Entrega": {
+      "main": [
+        [
+          {
+            "node": "Check Escalate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Conversation": {
+      "main": [
+        [
+          {
+            "node": "Fetch History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Transcribe Audio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Audio Too Large Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audio Too Large Alert": {
+      "main": [
+        [
+          {
+            "node": "Notify Consultant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is First Item?": {
+      "main": [
+        [
+          {
+            "node": "Save Assistant Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "4249c2b4-86df-4f98-be61-44f4838b0210",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dad561d0f13262eeb89a3a4c4431791044022fdf1c5362e725b170b3c88ccf60"
+  },
+  "id": "9CaMVro6tsEQu7p7",
+  "tags": []
+}
