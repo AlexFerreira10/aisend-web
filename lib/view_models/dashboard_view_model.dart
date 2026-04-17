@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../data/services/leads_service.dart';
 import '../data/services/consultants_service.dart';
 import '../models/lead_model.dart';
+import '../models/enums/lead_status_enum.dart';
 
 class DashboardViewModel extends ChangeNotifier {
   final LeadsService _leadsService;
@@ -19,16 +20,17 @@ class DashboardViewModel extends ChangeNotifier {
   }
 
   // ─── Filter State ────────────────────────────────────────────────────────────
-  String _selectedInstanceId = 'all';
+  // null = todas as instâncias
+  String? _selectedInstanceId;
   String _selectedPeriod = '7';
 
-  String get selectedInstanceId => _selectedInstanceId;
+  String? get selectedInstanceId => _selectedInstanceId;
   String get selectedPeriod => _selectedPeriod;
 
-  List<({String id, String label})> _instanceFilters = [
-    (id: 'all', label: 'Todas as Instâncias'),
+  List<({String? id, String label})> _instanceFilters = [
+    (id: null, label: 'Todas as Instâncias'),
   ];
-  List<({String id, String label})> get instanceFilters => _instanceFilters;
+  List<({String? id, String label})> get instanceFilters => _instanceFilters;
   List<String> get periodFilters => ['7', '15', '30'];
   String periodLabel(String days) => 'Últimos $days dias';
 
@@ -54,7 +56,7 @@ class DashboardViewModel extends ChangeNotifier {
 
   // ─── Actions ─────────────────────────────────────────────────────────────────
 
-  void selectInstance(String id) {
+  void selectInstance(String? id) {
     _selectedInstanceId = id;
     notifyListeners();
     loadData();
@@ -72,16 +74,16 @@ class DashboardViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final instanceName = _selectedInstanceId == 'all' ? null : _selectedInstanceId;
-
       final leadsResponse = await _leadsService.fetchLeads(
-        instanceName: instanceName,
+        instanceName: _selectedInstanceId,
         pageSize: 20,
       );
       _leads = leadsResponse.items;
       _totalLeads = leadsResponse.total;
-      _responseRate = _leads.isEmpty ? 0.0 : _leads.where((l) => l.lastInteractionAt != null).length / _leads.length;
-      _hotLeadsCount = _leads.where((l) => l.aiClassification == 'hot').length;
+      _responseRate = _leads.isEmpty
+          ? 0.0
+          : _leads.where((l) => l.lastInteractionAt != null).length / _leads.length;
+      _hotLeadsCount = _leads.where((l) => l.aiClassification == LeadStatusEnum.hot).length;
     } on ApiException catch (e) {
       _hasError = true;
       _errorMessage = e.isNetworkError
@@ -100,8 +102,8 @@ class DashboardViewModel extends ChangeNotifier {
     try {
       final instances = await _consultantsService.fetchInstances();
       _instanceFilters = [
-        (id: 'all', label: 'Todas as Instâncias'),
-        ...instances.map((i) => (id: i.id, label: i.label)),
+        (id: null, label: 'Todas as Instâncias'),
+        ...instances.map((i) => (id: i.id as String?, label: i.label)),
       ];
       notifyListeners();
     } catch (_) {

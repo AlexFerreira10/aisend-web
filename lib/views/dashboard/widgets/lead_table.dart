@@ -1,10 +1,10 @@
+import 'package:aisend/core/constants/app_dimensions.dart';
+import 'package:aisend/core/constants/app_spacer.dart';
+import 'package:aisend/core/theme/context_extension.dart';
+import 'package:aisend/core/utils/app_formatters.dart';
+import 'package:aisend/models/lead_model.dart';
+import 'package:aisend/views/lead_detail/lead_detail_view.dart';
 import 'package:flutter/material.dart';
-import '../../../core/theme/context_extension.dart';
-import '../../../core/utils/app_formatters.dart';
-import '../../../core/constants/app_dimensions.dart';
-import '../../../core/constants/app_spacer.dart';
-import '../../../models/lead_model.dart';
-import '../../lead_detail/lead_detail_view.dart';
 import 'status_badge.dart';
 
 class LeadTable extends StatelessWidget {
@@ -28,8 +28,7 @@ class _DesktopLeadTable extends StatelessWidget {
   const _DesktopLeadTable({required this.leads});
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
+  Widget build(BuildContext context) => Container(
       decoration: BoxDecoration(
         color: context.colorScheme.surfaceContainer,
         borderRadius: AppDimensions.radiusExtraLarge,
@@ -37,8 +36,7 @@ class _DesktopLeadTable extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
-        children: [
-          // Header
+        children: <Widget>[
           const _TableHeader(),
           Divider(height: 1, color: context.colorScheme.outline),
           // Rows
@@ -53,7 +51,6 @@ class _DesktopLeadTable extends StatelessWidget {
         ],
       ),
     );
-  }
 }
 
 class _TableHeader extends StatelessWidget {
@@ -71,9 +68,15 @@ class _TableHeader extends StatelessWidget {
       padding: AppDimensions.paddingHorizontalExtraLarge(context)
           .add(AppDimensions.paddingLarge(context)),
       child: Row(
-        children: [
-          Expanded(flex: 3, child: Text('CONTATO', style: style)),
-          Expanded(flex: 5, child: Text('ÚLTIMA MENSAGEM', style: style)),
+        children: <Widget>[
+          Expanded(flex: 2, child: Text('CONTATO', style: style)),
+          Expanded(
+            flex: 6,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Text('ÚLTIMA MENSAGEM', style: style),
+            ),
+          ),
           SizedBox(
             width: 120,
             child: Text('STATUS IA', style: style),
@@ -132,14 +135,13 @@ class _DesktopLeadRowState extends State<_DesktopLeadRow> {
           padding: AppDimensions.paddingHorizontalExtraLarge(context)
               .add(AppDimensions.paddingLarge(context)),
           child: Row(
-          children: [
-            // Contact
+            children: <Widget>[
             Expanded(
-              flex: 3,
+              flex: 2,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
-                children: [
+                children: <Widget>[
                   Text(
                     widget.lead.name,
                     style: context.textTheme.bodyMedium?.copyWith(
@@ -154,13 +156,16 @@ class _DesktopLeadRowState extends State<_DesktopLeadRow> {
             ),
             // Last message
             Expanded(
-              flex: 5,
-              child: Text(
-                widget.lead.lastMessage,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: context.textTheme.bodySmall?.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
+              flex: 6,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 64),
+                child: Text(
+                  widget.lead.lastMessage,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             ),
@@ -190,14 +195,12 @@ class _DesktopLeadRowState extends State<_DesktopLeadRow> {
                     color: context.colorScheme.onSurfaceVariant,
                     size: 20,
                   ),
-                  onPressed: () {
-                    Navigator.push(
+                  onPressed: () => Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => LeadDetailView(lead: widget.lead),
                       ),
-                    );
-                  },
+                    ),
                   tooltip: 'Ver detalhes',
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -212,7 +215,6 @@ class _DesktopLeadRowState extends State<_DesktopLeadRow> {
   }
 }
 
-// ─── Mobile Card List ──────────────────────────────────────────────────────────
 
 class _MobileLeadList extends StatelessWidget {
   final List<LeadModel> leads;
@@ -244,13 +246,13 @@ class _MobileLeadCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        children: <Widget>[
           Row(
-            children: [
+            children: <Widget>[
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                  children: <Widget>[
                     Text(
                       lead.name,
                       style: context.textTheme.labelLarge?.copyWith(

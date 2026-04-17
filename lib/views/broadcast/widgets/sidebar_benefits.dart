@@ -35,9 +35,9 @@ class _AntiBanCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        children:  <Widget>[
           Row(
-            children: [
+            children:  <Widget>[
               Icon(
                 Icons.security_rounded,
                 color: context.customColors.warning,
@@ -111,7 +111,7 @@ class _StatisticsCard extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
+                  children:  <Widget>[
                     Text(item.label, style: context.textTheme.bodyMedium),
                     Text(
                       item.value,

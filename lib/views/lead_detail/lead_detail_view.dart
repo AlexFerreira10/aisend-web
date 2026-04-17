@@ -4,6 +4,7 @@ import '../../core/theme/context_extension.dart';
 import '../../core/theme/custom_colors_extension.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/constants/app_spacer.dart';
+import '../../core/utils/app_toast.dart';
 import '../../data/services/leads_service.dart';
 import '../../models/lead_model.dart';
 import '../../models/message_model.dart';
@@ -28,9 +29,33 @@ class LeadDetailView extends StatelessWidget {
   }
 }
 
-class _LeadDetailContent extends StatelessWidget {
+class _LeadDetailContent extends StatefulWidget {
   final LeadModel lead;
   const _LeadDetailContent({required this.lead});
+
+  @override
+  State<_LeadDetailContent> createState() => _LeadDetailContentState();
+}
+
+class _LeadDetailContentState extends State<_LeadDetailContent> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<LeadDetailViewModel>().addListener(_onVmChanged);
+  }
+
+  @override
+  void dispose() {
+    context.read<LeadDetailViewModel>().removeListener(_onVmChanged);
+    super.dispose();
+  }
+
+  void _onVmChanged() {
+    final error = context.read<LeadDetailViewModel>().toggleError;
+    if (error != null && mounted) {
+      AppToast.show(context, error, type: ToastType.error);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +65,7 @@ class _LeadDetailContent extends StatelessWidget {
       appBar: const AiSendAppBar(currentRoute: '/'),
       body: Column(
         children: [
-          _LeadHeader(lead: lead, vm: vm),
+          _LeadHeader(lead: widget.lead, vm: vm),
           Divider(height: 1, color: context.colorScheme.outline),
           Expanded(
             child: vm.isLoading

@@ -47,6 +47,17 @@ class AiSendAppBar extends StatelessWidget implements PreferredSizeWidget {
               }
             },
           ),
+          const AppSpacerHorizontal.regular(),
+          _NavButton(
+            label: context.isMobile ? 'Agenda' : 'Agendamentos',
+            icon: Icons.schedule_rounded,
+            isActive: currentRoute == '/schedule',
+            onTap: () {
+              if (currentRoute != '/schedule') {
+                Navigator.pushReplacementNamed(context, '/schedule');
+              }
+            },
+          ),
         ],
       ),
     );

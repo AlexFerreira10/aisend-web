@@ -56,6 +56,15 @@ class ApiClient {
     }
   }
 
+  Future<dynamic> delete(String url) async {
+    try {
+      final response = await _dio.delete(url);
+      return _handleResponse(response);
+    } on DioException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
   // Unwraps ApiResponse<T> envelope. Falls back to raw data for non-wrapped responses.
   dynamic _handleResponse(Response response) {
     if (response.statusCode != null &&

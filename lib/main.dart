@@ -6,6 +6,7 @@ import 'models/lead_model.dart';
 import 'views/dashboard/dashboard_view.dart';
 import 'views/broadcast/broadcast_view.dart';
 import 'views/lead_detail/lead_detail_view.dart';
+import 'views/schedule/schedule_view.dart';
 
 void main() {
   runApp(const AiSendApp());
@@ -25,6 +26,7 @@ class AiSendApp extends StatelessWidget {
           routes: {
             '/': (_) => const DashboardView(),
             '/broadcast': (_) => const BroadcastView(),
+            '/schedule': (_) => const ScheduleView(),
           },
           onGenerateRoute: (settings) {
             if (settings.name == '/lead_detail') {

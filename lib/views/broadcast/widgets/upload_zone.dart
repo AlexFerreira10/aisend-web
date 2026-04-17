@@ -1,8 +1,8 @@
+import 'package:aisend/core/constants/app_dimensions.dart';
+import 'package:aisend/core/constants/app_spacer.dart';
+import 'package:aisend/core/theme/context_extension.dart';
+import 'package:aisend/core/theme/custom_colors_extension.dart';
 import 'package:flutter/material.dart';
-import '../../../core/theme/context_extension.dart';
-import '../../../core/theme/custom_colors_extension.dart';
-import '../../../core/constants/app_dimensions.dart';
-import '../../../core/constants/app_spacer.dart';
 
 class UploadZone extends StatefulWidget {
   final String? uploadedFileName;
@@ -109,12 +109,20 @@ class _DropZoneState extends State<_DropZone> {
               ),
               const AppSpacerVertical.large(),
               Text(
-                'Arraste lista de contatos (JSON)',
+                'Arraste lista de contatos',
                 style: context.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: active
                       ? context.colorScheme.primary
                       : context.colorScheme.onSurface,
+                ),
+              ),
+              const AppSpacerVertical.tiny(),
+              Text(
+                'CSV, Excel ou JSON',
+                style: context.textTheme.bodySmall?.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                  fontSize: 11,
                 ),
               ),
               const AppSpacerVertical.tiny(),

@@ -12,10 +12,18 @@ abstract final class AppConfig {
   // ─── Endpoints ───────────────────────────────────────────────────────────
   static String get healthEndpoint      => '$baseUrl/health';
   static String get instancesEndpoint   => '$baseUrl/api/consultants/instances';
-  static String get blastEndpoint       => '$baseUrl/api/outbound/blast';
-  static String get previewEndpoint     => '$baseUrl/api/outbound/preview';
+  static String get blastEndpoint          => '$baseUrl/api/outbound/blast';
+  static String get previewEndpoint        => '$baseUrl/api/outbound/preview';
+  static String get parseContactsEndpoint  => '$baseUrl/api/outbound/parse-contacts';
   static String get leadsEndpoint       => '$baseUrl/api/leads';
-  static String get broadcastsEndpoint  => '$baseUrl/api/outbound/broadcasts';
+  static String get broadcastsEndpoint   => '$baseUrl/api/outbound/broadcasts';
+  static String get scheduleEndpoint     => '$baseUrl/api/outbound/schedule';
+  static String get scheduledEndpoint    => '$baseUrl/api/outbound/scheduled';
+  static String scheduledCancelEndpoint(String id) =>
+      '$baseUrl/api/outbound/scheduled/$id';
+
+  static String captureUrl(String instance) =>
+      '$baseUrl/api/capture/$instance';
 
   static String messagesEndpoint(String phone) =>
       '$baseUrl/api/leads/$phone/messages';

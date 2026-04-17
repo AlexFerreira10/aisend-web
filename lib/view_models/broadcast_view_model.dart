@@ -6,20 +6,27 @@ import 'package:flutter/foundation.dart';
 import '../data/services/leads_service.dart';
 import '../data/services/broadcast_service.dart';
 import '../data/services/consultants_service.dart';
+import '../data/services/schedule_service.dart';
 import '../models/lead_model.dart';
+
+enum MessageMode { aiGenerated, fixed }
+enum SendMode { immediate, scheduled }
 
 class BroadcastViewModel extends ChangeNotifier {
   final LeadsService _leadsService;
   final BroadcastService _broadcastService;
   final ConsultantsService _consultantsService;
+  final ScheduleService _scheduleService;
 
   BroadcastViewModel({
     required LeadsService leadsService,
     required BroadcastService broadcastService,
     required ConsultantsService consultantsService,
+    required ScheduleService scheduleService,
   })  : _leadsService = leadsService,
         _broadcastService = broadcastService,
-        _consultantsService = consultantsService {
+        _consultantsService = consultantsService,
+        _scheduleService = scheduleService {
     _loadInstances();
   }
 
@@ -48,6 +55,7 @@ class BroadcastViewModel extends ChangeNotifier {
   bool _leadsFromBase = false;
   List<LeadModel> _dynamicLeads = [];
   bool _isLoadingLeads = false;
+  String? _pullLeadsError;
 
   InstanceModel? get selectedInstance => _selectedInstance;
   String get contactReason => _contactReason;
@@ -55,6 +63,26 @@ class BroadcastViewModel extends ChangeNotifier {
   bool get leadsFromBase => _leadsFromBase;
   int get dynamicLeadsCount => _dynamicLeads.length;
   bool get isLoadingLeads => _isLoadingLeads;
+  String? get pullLeadsError => _pullLeadsError;
+
+  // ─── Message Mode ─────────────────────────────────────────────────────────
+  MessageMode _messageMode = MessageMode.aiGenerated;
+  String _fixedMessage = '';
+
+  MessageMode get messageMode => _messageMode;
+  String get fixedMessage => _fixedMessage;
+
+  void setMessageMode(MessageMode mode) {
+    _messageMode = mode;
+    _previewParts = [];
+    _previewError = null;
+    notifyListeners();
+  }
+
+  void setFixedMessage(String value) {
+    _fixedMessage = value;
+    notifyListeners();
+  }
 
   void selectInstance(InstanceModel? instance) {
     _selectedInstance = instance;
@@ -66,19 +94,29 @@ class BroadcastViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> pickAndParseJson() async {
+  String? _parseWarnings;
+  String? get parseWarnings => _parseWarnings;
+
+  Future<void> pickAndParseFile() async {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['json'],
+        allowedExtensions: ['json', 'csv', 'xlsx'],
         withData: true,
       );
 
-      if (result != null && result.files.single.bytes != null) {
-        final file = result.files.single;
-        final content = utf8.decode(file.bytes!);
-        final dynamic data = jsonDecode(content);
+      if (result == null || result.files.single.bytes == null) return;
 
+      final file = result.files.single;
+      final bytes = file.bytes!;
+      final ext = file.extension?.toLowerCase() ?? '';
+
+      _parseWarnings = null;
+
+      if (ext == 'json') {
+        // Client-side JSON parse (existing behaviour)
+        final content = utf8.decode(bytes);
+        final dynamic data = jsonDecode(content);
         if (data is List) {
           _dynamicLeads = data.map((item) {
             final map = item as Map<String, dynamic>;
@@ -92,19 +130,35 @@ class BroadcastViewModel extends ChangeNotifier {
               createdAt: DateTime.now(),
             );
           }).where((l) => l.phone.isNotEmpty).toList();
-
           _uploadedFileName = file.name;
           _leadsFromBase = false;
           notifyListeners();
         }
+      } else {
+        // CSV / XLSX → backend parse
+        final parsed = await _broadcastService.parseContacts(bytes, file.name);
+        _dynamicLeads = parsed.contacts.map((c) => LeadModel(
+              id: '${DateTime.now().millisecondsSinceEpoch}${c.phone}',
+              name: c.name,
+              phone: c.phone,
+              createdAt: DateTime.now(),
+            )).toList();
+        _uploadedFileName = file.name;
+        _leadsFromBase = false;
+        if (parsed.warnings.isNotEmpty) {
+          _parseWarnings = '${parsed.warnings.length} ignorado(s): ${parsed.warnings.first}'
+              '${parsed.warnings.length > 1 ? ' (+${parsed.warnings.length - 1})' : ''}';
+        }
+        notifyListeners();
       }
     } catch (e) {
-      debugPrint('[BroadcastVM] Error importing JSON: $e');
+      debugPrint('[BroadcastVM] Error importing file: $e');
     }
   }
 
   Future<void> pullLeadsFromBase() async {
     _isLoadingLeads = true;
+    _pullLeadsError = null;
     notifyListeners();
 
     try {
@@ -115,8 +169,9 @@ class BroadcastViewModel extends ChangeNotifier {
       _dynamicLeads = response.items;
       _leadsFromBase = true;
       _uploadedFileName = null;
-    } catch (_) {
+    } catch (e) {
       _leadsFromBase = false;
+      _pullLeadsError = 'Erro ao buscar leads: $e';
     } finally {
       _isLoadingLeads = false;
       notifyListeners();
@@ -127,6 +182,59 @@ class BroadcastViewModel extends ChangeNotifier {
     _uploadedFileName = null;
     _leadsFromBase = false;
     _dynamicLeads = [];
+    _parseWarnings = null;
+    notifyListeners();
+  }
+
+  // ─── Preview State ───────────────────────────────────────────────────────────
+  List<String> _previewParts = [];
+  bool _isPreviewing = false;
+  String? _previewError;
+
+  List<String> get previewParts => _previewParts;
+  bool get isPreviewing => _isPreviewing;
+  bool get hasPreview => _previewParts.isNotEmpty;
+  String? get previewError => _previewError;
+
+  bool get _hasValidMessage =>
+      _messageMode == MessageMode.aiGenerated
+          ? _contactReason.trim().isNotEmpty
+          : _fixedMessage.trim().isNotEmpty;
+
+  bool get canPreview =>
+      _selectedInstance != null &&
+      _hasValidMessage &&
+      (_uploadedFileName != null || _leadsFromBase) &&
+      _dynamicLeads.isNotEmpty &&
+      !_isBroadcasting &&
+      !_isPreviewing;
+
+  Future<void> previewBlast() async {
+    if (!canPreview) return;
+    _isPreviewing = true;
+    _previewParts = [];
+    _previewError = null;
+    notifyListeners();
+    try {
+      final sampleName = _dynamicLeads.isNotEmpty ? _dynamicLeads.first.name : 'João';
+      final body = <String, dynamic>{
+        'instancia': _selectedInstance!.id,
+        'motivo': _contactReason,
+        'sampleName': sampleName,
+        if (_messageMode == MessageMode.fixed) 'fixedMessage': _fixedMessage.trim(),
+      };
+      _previewParts = await _broadcastService.preview(body);
+    } catch (e) {
+      _previewError = 'Erro ao gerar prévia: $e';
+    } finally {
+      _isPreviewing = false;
+      notifyListeners();
+    }
+  }
+
+  void resetPreview() {
+    _previewParts = [];
+    _previewError = null;
     notifyListeners();
   }
 
@@ -152,7 +260,7 @@ class BroadcastViewModel extends ChangeNotifier {
 
   bool get canBroadcast =>
       _selectedInstance != null &&
-      _contactReason.trim().isNotEmpty &&
+      _hasValidMessage &&
       (_uploadedFileName != null || _leadsFromBase) &&
       _dynamicLeads.isNotEmpty &&
       !_isBroadcasting;
@@ -189,11 +297,13 @@ class BroadcastViewModel extends ChangeNotifier {
         _currentLeadName = batch.first['name'] ?? '';
         notifyListeners();
 
-        final response = await _broadcastService.sendBlast({
+        final payload = <String, dynamic>{
           'instancia': _selectedInstance!.id,
           'motivo': _contactReason,
           'contacts': batch,
-        });
+          if (_messageMode == MessageMode.fixed) 'fixedMessage': _fixedMessage.trim(),
+        };
+        final response = await _broadcastService.sendBlast(payload);
 
         _sentCount += response.sent;
         _errorCount += response.errors;
@@ -218,6 +328,58 @@ class BroadcastViewModel extends ChangeNotifier {
     }
   }
 
+  // ─── Send Mode (immediate vs scheduled) ──────────────────────────────────────
+  SendMode _sendMode = SendMode.immediate;
+  DateTime? _scheduledAt;
+  bool _isScheduling = false;
+  bool _scheduleSuccess = false;
+  String? _scheduleError;
+
+  SendMode get sendMode => _sendMode;
+  DateTime? get scheduledAt => _scheduledAt;
+  bool get isScheduling => _isScheduling;
+  bool get scheduleSuccess => _scheduleSuccess;
+  String? get scheduleError => _scheduleError;
+
+  void setSendMode(SendMode mode) {
+    _sendMode = mode;
+    notifyListeners();
+  }
+
+  void setScheduledAt(DateTime dt) {
+    _scheduledAt = dt;
+    notifyListeners();
+  }
+
+  bool get canSchedule =>
+      canPreview && _scheduledAt != null && _scheduledAt!.isAfter(DateTime.now());
+
+  Future<void> scheduleBlast() async {
+    if (!canSchedule) return;
+    _isScheduling = true;
+    _scheduleError = null;
+    _scheduleSuccess = false;
+    notifyListeners();
+    try {
+      final contacts = _dynamicLeads
+          .map((l) => {'phone': l.phone, 'name': l.name})
+          .toList();
+      await _scheduleService.createSchedule({
+        'instancia': _selectedInstance!.id,
+        'motivo': _contactReason,
+        'scheduledAt': _scheduledAt!.toUtc().toIso8601String(),
+        'contacts': contacts,
+        if (_messageMode == MessageMode.fixed) 'fixedMessage': _fixedMessage.trim(),
+      });
+      _scheduleSuccess = true;
+    } catch (e) {
+      _scheduleError = 'Erro ao agendar: $e';
+    } finally {
+      _isScheduling = false;
+      notifyListeners();
+    }
+  }
+
   void resetBroadcast() {
     _isBroadcasting = false;
     _isCompleted = false;
@@ -227,6 +389,8 @@ class BroadcastViewModel extends ChangeNotifier {
     _errorCount = 0;
     _currentLeadName = '';
     _broadcastError = null;
+    _previewParts = [];
+    _previewError = null;
     notifyListeners();
   }
 }

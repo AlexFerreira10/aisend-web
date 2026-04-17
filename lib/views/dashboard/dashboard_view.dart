@@ -1,12 +1,15 @@
+import 'package:aisend/core/config/app_config.dart';
+import 'package:aisend/core/constants/app_dimensions.dart';
+import 'package:aisend/core/constants/app_spacer.dart';
+import 'package:aisend/core/theme/context_extension.dart';
+import 'package:aisend/core/theme/custom_colors_extension.dart';
+import 'package:aisend/core/utils/app_formatters.dart';
+import 'package:aisend/core/utils/app_toast.dart';
+import 'package:aisend/view_models/dashboard_view_model.dart';
+import 'package:aisend/widgets/aisend_app_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:provider/provider.dart';
-import '../../core/theme/context_extension.dart';
-import '../../core/theme/custom_colors_extension.dart';
-import '../../core/utils/app_formatters.dart';
-import '../../core/constants/app_dimensions.dart';
-import '../../core/constants/app_spacer.dart';
-import '../../view_models/dashboard_view_model.dart';
-import '../../widgets/aisend_app_bar.dart';
 import 'widgets/kpi_card.dart';
 import 'widgets/lead_table.dart';
 
@@ -14,8 +17,7 @@ class DashboardView extends StatelessWidget {
   const DashboardView({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       appBar: const AiSendAppBar(currentRoute: '/'),
       body: Builder(
         builder: (context) {
@@ -63,6 +65,8 @@ class DashboardView extends StatelessWidget {
                   children:  <Widget>[
                     _PageHeader(),
                     const AppSpacerVertical.large(),
+                    _CaptureLinksSection(),
+                    const AppSpacerVertical.large(),
                     _FilterRow(),
                     const AppSpacerVertical.extraLarge(),
                     _KpiSection(),
@@ -76,7 +80,6 @@ class DashboardView extends StatelessWidget {
         },
       ),
     );
-  }
 }
 
 class _PageHeader extends StatelessWidget {
@@ -106,12 +109,12 @@ class _FilterRow extends StatelessWidget {
     final isMobile = context.isMobile;
 
     final children = [
-      _StyledDropdown<String>(
+      _StyledDropdown<String?>(
         value: vm.selectedInstanceId,
         items: vm.instanceFilters
             .map((f) => DropdownMenuItem(value: f.id, child: Text(f.label)))
             .toList(),
-        onChanged: (v) => vm.selectInstance(v!),
+        onChanged: vm.selectInstance,
         width: isMobile ? double.infinity : 220,
       ),
       isMobile ? const AppSpacerVertical.regular() : const AppSpacerHorizontal.regular(),
@@ -186,7 +189,7 @@ class _KpiSection extends StatelessWidget {
     final vm = context.watch<DashboardViewModel>();
     final isMobile = context.isMobile;
 
-    final cards = [
+    final cards = <KpiCard>[
       KpiCard(
         label: 'Total de Leads',
         value: AppFormatters.formatNumber(vm.totalLeads),
@@ -247,14 +250,13 @@ class _ActivitySection extends StatelessWidget {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Header row
+      children: <Widget>[
         Row(
-          children: [
+          children: <Widget> [
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+                children: <Widget> [
                   Text(
                     'Atividade Recente',
                     style: context.textTheme.headlineMedium,
@@ -279,11 +281,7 @@ class _ActivitySection extends StatelessWidget {
           ],
         ),
         const AppSpacerVertical.extraLarge(),
-
-        // Table
         LeadTable(leads: vm.leads),
-
-        // Mobile button
         if (isMobile) ...[
           const AppSpacerVertical.large(),
           SizedBox(
@@ -319,8 +317,7 @@ class _GradientButtonState extends State<_GradientButton> {
   bool _hovered = false;
 
   @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
+  Widget build(BuildContext context) => MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
@@ -333,7 +330,7 @@ class _GradientButtonState extends State<_GradientButton> {
             gradient: context.customColors.primaryGradient,
             borderRadius: AppDimensions.radiusLarge,
             boxShadow: _hovered
-                ? [
+                ? <BoxShadow>[
                     BoxShadow(
                       color: context.colorScheme.primary.withValues(alpha: 0.4),
                       blurRadius: 20,
@@ -344,7 +341,7 @@ class _GradientButtonState extends State<_GradientButton> {
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
-            children: [
+            children:<Widget> [
               Icon(widget.icon, size: 16, color: Colors.white),
               const AppSpacerHorizontal.regular(),
               Text(
@@ -359,5 +356,125 @@ class _GradientButtonState extends State<_GradientButton> {
         ),
       ),
     );
+}
+
+class _CaptureLinksSection extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final vm = context.watch<DashboardViewModel>();
+    final instances = vm.instanceFilters.where((f) => f.id != null).toList();
+
+    if (instances.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: AppDimensions.paddingLarge(context),
+      decoration: BoxDecoration(
+        color: context.colorScheme.surfaceContainer,
+        borderRadius: AppDimensions.radiusLarge,
+        border: Border.all(color: context.colorScheme.outline, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(Icons.link_rounded,
+                  size: 16, color: context.colorScheme.primary),
+              const AppSpacerHorizontal.tiny(),
+              Text(
+                'Links de Captura',
+                style: context.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: context.colorScheme.primary,
+                ),
+              ),
+              const AppSpacerHorizontal.regular(),
+              Text(
+                '— compartilhe com seus clientes para iniciar conversa automaticamente',
+                style: context.textTheme.bodySmall?.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+          const AppSpacerVertical.medium(),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: instances.map((inst) {
+              final url = AppConfig.captureUrl(inst.id!);
+              return _CaptureLinkChip(label: inst.label, url: url);
+            }).toList(),
+          ),
+        ],
+      ),
+    );
   }
+}
+
+class _CaptureLinkChip extends StatefulWidget {
+  final String label;
+  final String url;
+  const _CaptureLinkChip({required this.label, required this.url});
+
+  @override
+  State<_CaptureLinkChip> createState() => _CaptureLinkChipState();
+}
+
+class _CaptureLinkChipState extends State<_CaptureLinkChip> {
+  bool _copied = false;
+
+  Future<void> _copy() async {
+    await Clipboard.setData(ClipboardData(text: widget.url));
+    if (!mounted) return;
+    setState(() => _copied = true);
+    AppToast.show(context, 'Link copiado!');
+    await Future.delayed(const Duration(seconds: 2));
+    if (mounted) setState(() => _copied = false);
+  }
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+      onTap: _copy,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: AppDimensions.paddingHorizontalLarge(context)
+            .add(AppDimensions.paddingVerticalSmall(context)),
+        decoration: BoxDecoration(
+          color: _copied
+              ? context.customColors.success.withValues(alpha: 0.12)
+              : context.colorScheme.surface,
+          borderRadius: AppDimensions.radiusMedium,
+          border: Border.all(
+            color: _copied
+                ? context.customColors.success
+                : context.colorScheme.outline,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              _copied ? Icons.check_rounded : Icons.copy_rounded,
+              size: 13,
+              color: _copied
+                  ? context.customColors.success
+                  : context.colorScheme.onSurfaceVariant,
+            ),
+            const AppSpacerHorizontal.tiny(),
+            Text(
+              widget.label,
+              style: context.textTheme.labelSmall?.copyWith(
+                color: _copied
+                    ? context.customColors.success
+                    : context.colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
 }

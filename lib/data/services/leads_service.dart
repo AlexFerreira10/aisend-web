@@ -1,9 +1,9 @@
+import 'package:aisend/core/config/app_config.dart';
+import 'package:aisend/models/lead_model.dart';
 import 'package:aisend/models/message_model.dart';
 
 import 'api_client.dart';
 import 'schemas/leads_response.dart';
-import '../../models/lead_model.dart';
-import '../../core/config/app_config.dart';
 
 class LeadsService {
   final ApiClient _api;
@@ -18,8 +18,7 @@ class LeadsService {
     final params = <String, String>{
       'page': page.toString(),
       'pageSize': pageSize.toString(),
-      if (instanceName != null && instanceName != 'all')
-        'instanceName': instanceName,
+      'instanceName': ?instanceName,
       'classification': ?classification,
     };
     final uri =

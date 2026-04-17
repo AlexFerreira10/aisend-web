@@ -12,6 +12,7 @@ class LeadDetailViewModel extends ChangeNotifier {
   bool _hasError = false;
   bool _updatingWaiting = false;
   bool _waitingHuman;
+  String? _toggleError;
 
   LeadDetailViewModel({required LeadsService leadsService, required this.lead})
       : _leadsService = leadsService,
@@ -24,6 +25,7 @@ class LeadDetailViewModel extends ChangeNotifier {
   bool get hasError => _hasError;
   bool get waitingHuman => _waitingHuman;
   bool get updatingWaiting => _updatingWaiting;
+  String? get toggleError => _toggleError;
 
   Future<void> loadMessages() async {
     _isLoading = true;
@@ -46,10 +48,11 @@ class LeadDetailViewModel extends ChangeNotifier {
 
     try {
       final newValue = !_waitingHuman;
-  await _leadsService.setWaitingHuman(lead.phone, waiting: newValue);
+      await _leadsService.setWaitingHuman(lead.phone, waiting: newValue);
       _waitingHuman = newValue;
-    } catch (_) {
-      // Revert on failure — state unchanged
+      _toggleError = null;
+    } catch (e) {
+      _toggleError = 'Erro ao atualizar atendimento: $e';
     } finally {
       _updatingWaiting = false;
       notifyListeners();

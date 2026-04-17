@@ -1,13 +1,13 @@
+import 'package:aisend/core/constants/app_dimensions.dart';
+import 'package:aisend/core/constants/app_spacer.dart';
+import 'package:aisend/core/theme/context_extension.dart';
+import 'package:aisend/core/theme/custom_colors_extension.dart';
+import 'package:aisend/models/enums/lead_status_enum.dart';
 import 'package:flutter/material.dart';
-import '../../../core/theme/context_extension.dart';
-import '../../../core/theme/custom_colors_extension.dart';
-import '../../../core/constants/app_dimensions.dart';
-import '../../../core/constants/app_spacer.dart';
-import '../../../models/enums/lead_status_enum.dart';
 
 class StatusBadge extends StatefulWidget {
   final LeadStatusEnum status;
-  const StatusBadge({Key? key, required this.status}) : super(key: key);
+  const StatusBadge({super.key, required this.status});
 
   @override
   State<StatusBadge> createState() => _StatusBadgeState();
@@ -40,31 +40,32 @@ class _StatusBadgeState extends State<StatusBadge>
     super.dispose();
   }
 
-  (Color bg, Color text, String label, String emoji) _getConfig(BuildContext context) {
-    switch (widget.status) {
-      case LeadStatusEnum.hot:
-        return (
+  (Color bg, Color text, String label, String emoji) _getConfig(BuildContext context) => switch (widget.status) {
+      LeadStatusEnum.hot => (
           context.customColors.statusHotBg,
           context.customColors.statusHot,
           widget.status.label,
           widget.status.emoji,
-        );
-      case LeadStatusEnum.warm:
-        return (
+        ),
+      LeadStatusEnum.warm => (
           context.customColors.statusWarmBg,
           context.customColors.statusWarm,
           widget.status.label,
           widget.status.emoji,
-        );
-      case LeadStatusEnum.cold:
-        return (
+        ),
+      LeadStatusEnum.cold => (
           context.customColors.statusColdBg,
           context.customColors.statusCold,
           widget.status.label,
           widget.status.emoji,
-        );
-    }
-  }
+        ),
+      LeadStatusEnum.activeClient => (
+          const Color(0xFFFFF8E1),
+          const Color(0xFFF59E0B),
+          widget.status.label,
+          widget.status.emoji,
+        ),
+    };
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +83,7 @@ class _StatusBadgeState extends State<StatusBadge>
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [
+        children: <Widget>[
           Text(emoji, style: context.textTheme.labelSmall?.copyWith(fontSize: 11)),
           const AppSpacerHorizontal.small(),
           Text(
