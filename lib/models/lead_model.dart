@@ -1,65 +1,81 @@
-enum LeadStatus { hot, warm, cold }
-
-extension LeadStatusExtension on LeadStatus {
-  String get label => switch (this) {
-    LeadStatus.hot => 'Hot',
-    LeadStatus.warm => 'Warm',
-    LeadStatus.cold => 'Cold',
-  };
-
-  String get emoji => switch (this) {
-    LeadStatus.hot => '🔥',
-    LeadStatus.warm => '☀️',
-    LeadStatus.cold => '❄️',
-  };
-}
+import 'enums/lead_status_enum.dart';
+import 'enums/funnel_status_enum.dart';
 
 class LeadModel {
   final String id;
   final String name;
   final String phone;
+  final String? consultantId;
+  final FunnelStatusEnum funnelStatus;
+  final LeadStatusEnum aiClassification;
+  final bool waitingHuman;
   final String lastMessage;
-  final LeadStatus status;
-  final String time;
+  final DateTime? lastInteractionAt;
+  final DateTime createdAt;
 
   const LeadModel({
     required this.id,
     required this.name,
     required this.phone,
-    required this.lastMessage,
-    required this.status,
-    required this.time,
+    this.consultantId,
+    this.funnelStatus = FunnelStatusEnum.cold,
+    this.aiClassification = LeadStatusEnum.cold,
+    this.waitingHuman = false,
+    this.lastMessage = '',
+    this.lastInteractionAt,
+    required this.createdAt,
   });
+
+
+  LeadStatusEnum get status => aiClassification;
+
+  String get time {
+    if (lastInteractionAt == null) return 'Nunca';
+    final diff = DateTime.now().toUtc().difference(lastInteractionAt!);
+    if (diff.inMinutes < 60) return '${diff.inMinutes} min atrás';
+    if (diff.inHours < 24) return '${diff.inHours}h atrás';
+    return '${diff.inDays}d atrás';
+  }
+
+  factory LeadModel.fromJson(Map<String, dynamic> json) => LeadModel(
+        id: json['id'] as String,
+        name: json['name'] as String? ?? 'Sem nome',
+        phone: json['phone'] as String,
+        consultantId: json['consultantId'] as String?,
+        funnelStatus: FunnelStatusEnumExtension.fromString(json['funnelStatus'] as String?),
+        aiClassification: LeadStatusEnumExtension.fromString(json['aiClassification'] as String?),
+        waitingHuman: json['waitingHuman'] as bool? ?? false,
+        lastMessage: json['lastMessage'] as String? ?? '',
+        lastInteractionAt: json['lastInteractionAt'] != null
+            ? DateTime.parse(json['lastInteractionAt'] as String)
+            : null,
+        createdAt: DateTime.parse(
+          json['createdAt'] as String? ?? DateTime.now().toIso8601String(),
+        ),
+      );
 
   LeadModel copyWith({
     String? id,
     String? name,
     String? phone,
+    String? consultantId,
+    FunnelStatusEnum? funnelStatus,
+    LeadStatusEnum? aiClassification,
+    bool? waitingHuman,
     String? lastMessage,
-    LeadStatus? status,
-    String? time,
-  }) => LeadModel(
-    id: id ?? this.id,
-    name: name ?? this.name,
-    phone: phone ?? this.phone,
-    lastMessage: lastMessage ?? this.lastMessage,
-    status: status ?? this.status,
-    time: time ?? this.time,
-  );
-}
-
-class InstanceModel {
-  final String id;
-  final String label;
-  final String phone;
-  final bool isConnected;
-
-  const InstanceModel({
-    required this.id,
-    required this.label,
-    required this.phone,
-    this.isConnected = true,
-  });
-
-  String get displayName => '$label ($phone)';
+    DateTime? lastInteractionAt,
+    DateTime? createdAt,
+  }) =>
+      LeadModel(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        phone: phone ?? this.phone,
+        consultantId: consultantId ?? this.consultantId,
+        funnelStatus: funnelStatus ?? this.funnelStatus,
+        aiClassification: aiClassification ?? this.aiClassification,
+        waitingHuman: waitingHuman ?? this.waitingHuman,
+        lastMessage: lastMessage ?? this.lastMessage,
+        lastInteractionAt: lastInteractionAt ?? this.lastInteractionAt,
+        createdAt: createdAt ?? this.createdAt,
+      );
 }
