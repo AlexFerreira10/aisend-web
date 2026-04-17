@@ -1,8 +1,8 @@
+import 'package:aisend/core/constants/app_dimensions.dart';
+import 'package:aisend/core/constants/app_spacer.dart';
+import 'package:aisend/core/theme/context_extension.dart';
+import 'package:aisend/core/theme/custom_colors_extension.dart';
 import 'package:flutter/material.dart';
-import '../core/theme/context_extension.dart';
-import '../core/theme/custom_colors_extension.dart';
-import '../core/constants/app_dimensions.dart';
-import '../core/constants/app_spacer.dart';
 
 class AiSendAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String currentRoute;
@@ -13,8 +13,7 @@ class AiSendAppBar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(64);
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
+  Widget build(BuildContext context) => Container(
       height: 64,
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
@@ -28,7 +27,7 @@ class AiSendAppBar extends StatelessWidget implements PreferredSizeWidget {
           const _AiSendLogo(),
           const Spacer(),
           _NavButton(
-            label: context.isMobile ? 'Results' : 'Results Center',
+            label: context.isMobile ? 'Resultados' : 'Central de Resultados',
             icon: Icons.bar_chart_rounded,
             isActive: currentRoute == '/',
             onTap: () {
@@ -51,7 +50,6 @@ class AiSendAppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
     );
-  }
 }
 
 class _AiSendLogo extends StatelessWidget {
@@ -85,7 +83,7 @@ class _AiSendLogo extends StatelessWidget {
           Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+            children: <Widget>[
               ShaderMask(
                 shaderCallback: (bounds) =>
                     context.customColors.logoGradient.createShader(bounds),

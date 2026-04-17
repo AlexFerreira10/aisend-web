@@ -1,17 +1,45 @@
 import 'dart:convert';
-import 'dart:async';
-import 'dart:math';
+import 'package:aisend/data/services/schemas/api_exception.dart';
+import 'package:aisend/models/instance_model.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
-import '../data/repositories/broadcast_repository.dart';
-import '../data/sources/mock_data_source.dart';
+import '../data/services/leads_service.dart';
+import '../data/services/broadcast_service.dart';
+import '../data/services/consultants_service.dart';
 import '../models/lead_model.dart';
 
 class BroadcastViewModel extends ChangeNotifier {
-  final BroadcastRepository _repository;
+  final LeadsService _leadsService;
+  final BroadcastService _broadcastService;
+  final ConsultantsService _consultantsService;
 
-  BroadcastViewModel({required BroadcastRepository repository})
-      : _repository = repository;
+  BroadcastViewModel({
+    required LeadsService leadsService,
+    required BroadcastService broadcastService,
+    required ConsultantsService consultantsService,
+  })  : _leadsService = leadsService,
+        _broadcastService = broadcastService,
+        _consultantsService = consultantsService {
+    _loadInstances();
+  }
+
+  // ─── Instances ───────────────────────────────────────────────────────────────
+  List<InstanceModel> _instances = [];
+  bool _loadingInstances = true;
+
+  List<InstanceModel> get instances => _instances;
+  bool get loadingInstances => _loadingInstances;
+
+  Future<void> _loadInstances() async {
+    try {
+  _instances = await _consultantsService.fetchInstances();
+    } catch (_) {
+      _instances = [];
+    } finally {
+      _loadingInstances = false;
+      notifyListeners();
+    }
+  }
 
   // ─── Form State ──────────────────────────────────────────────────────────────
   InstanceModel? _selectedInstance;
@@ -19,14 +47,14 @@ class BroadcastViewModel extends ChangeNotifier {
   String? _uploadedFileName;
   bool _leadsFromBase = false;
   List<LeadModel> _dynamicLeads = [];
+  bool _isLoadingLeads = false;
 
   InstanceModel? get selectedInstance => _selectedInstance;
   String get contactReason => _contactReason;
   String? get uploadedFileName => _uploadedFileName;
   bool get leadsFromBase => _leadsFromBase;
   int get dynamicLeadsCount => _dynamicLeads.length;
-
-  List<InstanceModel> get instances => MockDataSource.instances;
+  bool get isLoadingLeads => _isLoadingLeads;
 
   void selectInstance(InstanceModel? instance) {
     _selectedInstance = instance;
@@ -54,17 +82,14 @@ class BroadcastViewModel extends ChangeNotifier {
         if (data is List) {
           _dynamicLeads = data.map((item) {
             final map = item as Map<String, dynamic>;
-            // Flexibility in field names
-            final String name = map['nome'] ?? map['name'] ?? 'No Name';
-            final String phone = map['numero'] ?? map['phone'] ?? map['telefone'] ?? '';
-            
+            final String name = map['nome'] ?? map['name'] ?? 'Sem nome';
+            final String phone =
+                map['numero'] ?? map['phone'] ?? map['telefone'] ?? '';
             return LeadModel(
-              id: DateTime.now().millisecondsSinceEpoch.toString() + phone,
+              id: '${DateTime.now().millisecondsSinceEpoch}$phone',
               name: name,
               phone: phone,
-              lastMessage: 'Imported via JSON',
-              status: LeadStatus.cold,
-              time: 'Just now',
+              createdAt: DateTime.now(),
             );
           }).where((l) => l.phone.isNotEmpty).toList();
 
@@ -74,19 +99,34 @@ class BroadcastViewModel extends ChangeNotifier {
         }
       }
     } catch (e) {
-      debugPrint('[AiSend] Error importing JSON: $e');
+      debugPrint('[BroadcastVM] Error importing JSON: $e');
     }
   }
 
-  void pullLeadsFromBase() {
-    _uploadedFileName = null;
-    _leadsFromBase = true;
+  Future<void> pullLeadsFromBase() async {
+    _isLoadingLeads = true;
     notifyListeners();
+
+    try {
+      final response = await _leadsService.fetchLeads(
+        classification: 'cold',
+        pageSize: 100,
+      );
+      _dynamicLeads = response.items;
+      _leadsFromBase = true;
+      _uploadedFileName = null;
+    } catch (_) {
+      _leadsFromBase = false;
+    } finally {
+      _isLoadingLeads = false;
+      notifyListeners();
+    }
   }
 
   void clearUpload() {
     _uploadedFileName = null;
     _leadsFromBase = false;
+    _dynamicLeads = [];
     notifyListeners();
   }
 
@@ -95,12 +135,11 @@ class BroadcastViewModel extends ChangeNotifier {
   bool _isCompleted = false;
   double _progress = 0.0;
   int _sentCount = 0;
+  // _repliedCount is not populated in real-time by the blast API (MVP limitation)
   int _repliedCount = 0;
   int _errorCount = 0;
   String _currentLeadName = '';
-
-  Timer? _timer;
-  final _random = Random();
+  String? _broadcastError;
 
   bool get isBroadcasting => _isBroadcasting;
   bool get isCompleted => _isCompleted;
@@ -109,89 +148,77 @@ class BroadcastViewModel extends ChangeNotifier {
   int get repliedCount => _repliedCount;
   int get errorCount => _errorCount;
   String get currentLeadName => _currentLeadName;
+  String? get broadcastError => _broadcastError;
 
   bool get canBroadcast =>
       _selectedInstance != null &&
       _contactReason.trim().isNotEmpty &&
       (_uploadedFileName != null || _leadsFromBase) &&
+      _dynamicLeads.isNotEmpty &&
       !_isBroadcasting;
 
-  /// Starts the broadcast: iterates through all leads, calls n8n endpoint
-  /// for each one, and updates progress with chaotic intervals.
-  void startBroadcast(VoidCallback onComplete) {
+  Future<void> startBroadcast(VoidCallback onComplete) async {
     if (!canBroadcast) return;
 
     _isBroadcasting = true;
     _isCompleted = false;
     _progress = 0.0;
     _sentCount = 0;
-    _repliedCount = 0;
     _errorCount = 0;
+    _broadcastError = null;
     notifyListeners();
 
-    final leads = _leadsFromBase ? MockDataSource.leads : _dynamicLeads;
-    final total = leads.length;
-    
-    if (total == 0) {
-      _isBroadcasting = false;
-      notifyListeners();
-      return;
-    }
+    try {
+      final contacts = _dynamicLeads
+          .map((l) => {'phone': l.phone, 'name': l.name})
+          .toList();
 
-    int index = 0;
+      final total = contacts.length;
+      int processed = 0;
 
-    Future<void> sendNext() async {
-      if (index >= total) {
-        _isBroadcasting = false;
-        _isCompleted = true;
-        _progress = 1.0;
-        _currentLeadName = '';
+      // Split into batches of 10 to give incremental progress feedback.
+      // The backend controls the actual sending delay (2–5s random per message).
+      const batchSize = 10;
+      final batches = <List<Map<String, String>>>[];
+      for (var i = 0; i < contacts.length; i += batchSize) {
+        final end = (i + batchSize).clamp(0, contacts.length);
+        batches.add(contacts.sublist(i, end));
+      }
+
+      for (final batch in batches) {
+        _currentLeadName = batch.first['name'] ?? '';
         notifyListeners();
-        onComplete();
-        return;
+
+        final response = await _broadcastService.sendBlast({
+          'instancia': _selectedInstance!.id,
+          'motivo': _contactReason,
+          'contacts': batch,
+        });
+
+        _sentCount += response.sent;
+        _errorCount += response.errors;
+        processed += batch.length;
+        _progress = processed / total;
+        notifyListeners();
       }
 
-      final lead = leads[index];
-      _currentLeadName = lead.name;
+      _isCompleted = true;
+      onComplete();
+    } on ApiException catch (e) {
+      _broadcastError = e.isNetworkError
+          ? 'Sem conexão com o servidor.'
+          : 'Erro ao disparar: ${e.message}';
+    } catch (e) {
+      _broadcastError = 'Erro inesperado: $e';
+    } finally {
+      _isBroadcasting = false;
+      _currentLeadName = '';
+      _progress = _isCompleted ? 1.0 : _progress;
       notifyListeners();
-
-      // ── Chaotic delay (RN04) ──────────────────────────────────────────────
-      final delayMs = 600 + _random.nextInt(1200);
-      await Future.delayed(Duration(milliseconds: delayMs));
-
-      // ── POST to n8n ───────────────────────────────────────────────────────
-      final result = await _repository.sendLead(
-        phone: lead.phone,
-        name: lead.name,
-        reason: _contactReason,
-        instance: _selectedInstance!.label,
-      );
-
-      index++;
-
-      if (!result.success) {
-        _errorCount++;
-        debugPrint(
-          '[AiSend] Failed to send to ${lead.name}: ${result.errorMessage}',
-        );
-      } else {
-        _sentCount++;
-        // Simulates response rate (23% — aligned with mock KPI)
-        if (_random.nextDouble() < 0.23) _repliedCount++;
-      }
-
-      _progress = index / total;
-      notifyListeners();
-
-      // Schedule next without blocking UI
-      _timer = Timer(Duration.zero, sendNext);
     }
-
-    sendNext();
   }
 
   void resetBroadcast() {
-    _timer?.cancel();
     _isBroadcasting = false;
     _isCompleted = false;
     _progress = 0.0;
@@ -199,12 +226,7 @@ class BroadcastViewModel extends ChangeNotifier {
     _repliedCount = 0;
     _errorCount = 0;
     _currentLeadName = '';
+    _broadcastError = null;
     notifyListeners();
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
   }
 }

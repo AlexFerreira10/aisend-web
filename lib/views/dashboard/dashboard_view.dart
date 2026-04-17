@@ -17,31 +17,63 @@ class DashboardView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const AiSendAppBar(currentRoute: '/'),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: AppDimensions.extraLarge(context).isFinite 
-              ? AppDimensions.paddingExtraLarge(context)
-              : AppDimensions.paddingLarge(context),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Page Header ─────────────────────────────────────
-              _PageHeader(),
-              const AppSpacerVertical.large(),
+      body: Builder(
+        builder: (context) {
+          final vm = context.watch<DashboardViewModel>();
 
-              // ── Filters ─────────────────────────────────────────
-              _FilterRow(),
-              const AppSpacerVertical.extraLarge(),
+          if (vm.isLoading && vm.leads.isEmpty) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-              // ── KPI Cards ────────────────────────────────────────
-              _KpiSection(),
-              const AppSpacerVertical.huge(),
+          if (vm.hasError && vm.leads.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(Icons.cloud_off_rounded,
+                      size: 64,
+                      color: context.colorScheme.onSurfaceVariant),
+                  const AppSpacerVertical.large(),
+                  Text(
+                    vm.errorMessage,
+                    textAlign: TextAlign.center,
+                    style: context.textTheme.bodyLarge,
+                  ),
+                  const AppSpacerVertical.medium(),
+                  FilledButton.icon(
+                    onPressed: vm.loadData,
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text('Tentar novamente'),
+                  ),
+                ],
+              ),
+            );
+          }
 
-              // ── Leads Table ──────────────────────────────────────
-              _ActivitySection(),
-            ],
-          ),
-        ),
+          return RefreshIndicator(
+            onRefresh: vm.loadData,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Padding(
+                padding: AppDimensions.extraLarge(context).isFinite
+                    ? AppDimensions.paddingExtraLarge(context)
+                    : AppDimensions.paddingLarge(context),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children:  <Widget>[
+                    _PageHeader(),
+                    const AppSpacerVertical.large(),
+                    _FilterRow(),
+                    const AppSpacerVertical.extraLarge(),
+                    _KpiSection(),
+                    const AppSpacerVertical.huge(),
+                    _ActivitySection(),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -49,10 +81,9 @@ class DashboardView extends StatelessWidget {
 
 class _PageHeader extends StatelessWidget {
   @override
-  Widget build(BuildContext context) {
-    return Column(
+  Widget build(BuildContext context) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+      children: <Widget>[
         Text(
           'Central de Resultados',
           style: context.textTheme.displayMedium,
@@ -66,7 +97,6 @@ class _PageHeader extends StatelessWidget {
         ),
       ],
     );
-  }
 }
 
 class _FilterRow extends StatelessWidget {
@@ -76,7 +106,6 @@ class _FilterRow extends StatelessWidget {
     final isMobile = context.isMobile;
 
     final children = [
-      // Instance filter
       _StyledDropdown<String>(
         value: vm.selectedInstanceId,
         items: vm.instanceFilters
@@ -123,8 +152,7 @@ class _StyledDropdown<T> extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return SizedBox(
+  Widget build(BuildContext context) => SizedBox(
       width: width == double.infinity ? null : width,
       child: Container(
         height: 40,
@@ -150,7 +178,6 @@ class _StyledDropdown<T> extends StatelessWidget {
         ),
       ),
     );
-  }
 }
 
 class _KpiSection extends StatelessWidget {

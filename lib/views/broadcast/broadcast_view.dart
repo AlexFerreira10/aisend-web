@@ -1,3 +1,4 @@
+import 'package:aisend/models/instance_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/context_extension.dart';
@@ -5,7 +6,6 @@ import '../../core/theme/custom_colors_extension.dart';
 import '../../core/utils/app_toast.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/constants/app_spacer.dart';
-import '../../models/lead_model.dart';
 import '../../view_models/broadcast_view_model.dart';
 import '../../widgets/aisend_app_bar.dart';
 import 'widgets/upload_zone.dart';

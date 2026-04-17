@@ -4,6 +4,7 @@ import '../../../core/utils/app_formatters.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_spacer.dart';
 import '../../../models/lead_model.dart';
+import '../../lead_detail/lead_detail_view.dart';
 import 'status_badge.dart';
 
 class LeadTable extends StatelessWidget {
@@ -110,17 +111,27 @@ class _DesktopLeadRowState extends State<_DesktopLeadRow> {
   Widget build(BuildContext context) {
     final phone = AppFormatters.formatPhone(widget.lead.phone);
 
+    void navigate() => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => LeadDetailView(lead: widget.lead),
+          ),
+        );
+
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        color: _hovered
-            ? context.colorScheme.surfaceContainerHighest
-            : Colors.transparent,
-        padding: AppDimensions.paddingHorizontalExtraLarge(context)
-            .add(AppDimensions.paddingLarge(context)),
-        child: Row(
+      child: GestureDetector(
+        onTap: navigate,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          color: _hovered
+              ? context.colorScheme.surfaceContainerHighest
+              : Colors.transparent,
+          padding: AppDimensions.paddingHorizontalExtraLarge(context)
+              .add(AppDimensions.paddingLarge(context)),
+          child: Row(
           children: [
             // Contact
             Expanded(
@@ -179,7 +190,14 @@ class _DesktopLeadRowState extends State<_DesktopLeadRow> {
                     color: context.colorScheme.onSurfaceVariant,
                     size: 20,
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => LeadDetailView(lead: widget.lead),
+                      ),
+                    );
+                  },
                   tooltip: 'Ver detalhes',
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -189,7 +207,8 @@ class _DesktopLeadRowState extends State<_DesktopLeadRow> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 }
 

@@ -1,9 +1,11 @@
+import 'package:aisend/core/constants/app_dimensions.dart';
+import 'package:aisend/core/constants/app_spacer.dart';
+import 'package:aisend/core/theme/context_extension.dart';
+import 'package:aisend/core/theme/custom_colors_extension.dart';
+import 'package:aisend/view_models/dashboard_view_model.dart';
 import 'package:flutter/material.dart';
-import '../../../core/theme/context_extension.dart';
-import '../../../core/theme/custom_colors_extension.dart';
-import '../../../core/constants/app_dimensions.dart';
-import '../../../core/constants/app_spacer.dart';
-import '../../../data/sources/mock_data_source.dart';
+import 'package:provider/provider.dart';
+
 
 class SidebarBenefits extends StatelessWidget {
   const SidebarBenefits({super.key});
@@ -11,8 +13,6 @@ class SidebarBenefits extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Column(
     children: <Widget>[
-      // _BenefitsCard(),
-      // const AppSpacerVertical.large(),
       _AntiBanCard(),
       const AppSpacerVertical.large(),
       _StatisticsCard(),
@@ -20,96 +20,10 @@ class SidebarBenefits extends StatelessWidget {
   );
 }
 
-// class _BenefitsCard extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     final items = [
-//       (
-//         icon: Icons.auto_awesome_rounded,
-//         title: 'Mensagens Dinâmicas',
-//         subtitle: 'IA varia o texto por lead',
-//       ),
-//       (icon: Icons.shuffle_rounded, title: 'Intervalo Caótico', subtitle: 'Aleatório e imprevisível'),
-//       (
-//         icon: Icons.psychology_rounded,
-//         title: 'Feedback Inteligente',
-//         subtitle: 'Classifica Frio/Morno/Quente',
-//       ),
-//       (icon: Icons.shield_rounded, title: 'Risco Mínimo', subtitle: 'Simula comportamento humano'),
-//     ];
-
-//     return _SideCard(
-//       title: 'Vantagens vs ZapNinja',
-//       child: Column(
-//         children: items
-//             .map(
-//               (item) => _BenefitItem(
-//                 icon: item.icon,
-//                 title: item.title,
-//                 subtitle: item.subtitle,
-//               ),
-//             )
-//             .toList(),
-//       ),
-//     );
-//   }
-// }
-
-class _BenefitItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  const _BenefitItem({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: AppDimensions.paddingBottom(context),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Container(
-          padding: AppDimensions.paddingSmall(context),
-          decoration: BoxDecoration(
-            color: context.colorScheme.primary.withValues(alpha: 0.1),
-            borderRadius: AppDimensions.radiusSmall,
-          ),
-          child: Icon(
-            icon,
-            color: context.colorScheme.primary,
-            size: AppDimensions.iconSmallest(context),
-          ),
-        ),
-        const AppSpacerHorizontal.regular(),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                title,
-                style: context.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: context.colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 1),
-              Text(subtitle, style: context.textTheme.bodySmall),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
-}
 
 class _AntiBanCard extends StatelessWidget {
   @override
-  Widget build(BuildContext context) {
-    return Container(
+  Widget build(BuildContext context) => Container(
       padding: AppDimensions.paddingLarge(context),
       decoration: BoxDecoration(
         color: context.customColors.warningBg,
@@ -167,24 +81,24 @@ class _AntiBanCard extends StatelessWidget {
         ],
       ),
     );
-  }
 }
 
 class _StatisticsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final dashboard = context.watch<DashboardViewModel>();
     final items = [
       (
-        label: 'Disparos Hoje',
-        value: MockDataSource.broadcastsToday.toString(),
+        label: 'Total de Leads',
+        value: dashboard.totalLeads.toString(),
       ),
       (
         label: 'Taxa Resp. Média',
-        value: '${(MockDataSource.responseRate * 100).toStringAsFixed(0)}%',
+        value: '${(dashboard.responseRate * 100).toStringAsFixed(0)}%',
       ),
       (
-        label: 'Leads Convertidos',
-        value: MockDataSource.convertedLeads.toString(),
+        label: 'Leads Quentes',
+        value: dashboard.hotLeadsCount.toString(),
       ),
     ];
 
@@ -223,8 +137,7 @@ class _SideCard extends StatelessWidget {
   const _SideCard({required this.title, required this.child});
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
+  Widget build(BuildContext context) => Container(
       width: double.infinity,
       padding: AppDimensions.paddingExtraLarge(context),
       decoration: BoxDecoration(
@@ -234,7 +147,7 @@ class _SideCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        children: <Widget>[
           Text(
             title,
             style: context.textTheme.titleMedium?.copyWith(
@@ -247,5 +160,4 @@ class _SideCard extends StatelessWidget {
         ],
       ),
     );
-  }
 }

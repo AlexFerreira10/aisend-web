@@ -3,11 +3,11 @@ import '../../../core/theme/context_extension.dart';
 import '../../../core/theme/custom_colors_extension.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_spacer.dart';
-import '../../../models/lead_model.dart';
+import '../../../models/enums/lead_status_enum.dart';
 
 class StatusBadge extends StatefulWidget {
-  final LeadStatus status;
-  const StatusBadge({super.key, required this.status});
+  final LeadStatusEnum status;
+  const StatusBadge({Key? key, required this.status}) : super(key: key);
 
   @override
   State<StatusBadge> createState() => _StatusBadgeState();
@@ -29,7 +29,7 @@ class _StatusBadgeState extends State<StatusBadge>
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
-    if (widget.status == LeadStatus.hot) {
+    if (widget.status == LeadStatusEnum.hot) {
       _pulseController.repeat(reverse: true);
     }
   }
@@ -40,27 +40,31 @@ class _StatusBadgeState extends State<StatusBadge>
     super.dispose();
   }
 
-  (Color bg, Color text, String label, String emoji) _getConfig(BuildContext context) =>
-      switch (widget.status) {
-        LeadStatus.hot => (
-            context.customColors.statusHotBg,
-            context.customColors.statusHot,
-            'Quente',
-            '🔥',
-          ),
-        LeadStatus.warm => (
-            context.customColors.statusWarmBg,
-            context.customColors.statusWarm,
-            'Morno',
-            '☀️',
-          ),
-        LeadStatus.cold => (
-            context.customColors.statusColdBg,
-            context.customColors.statusCold,
-            'Frio',
-            '❄️',
-          ),
-      };
+  (Color bg, Color text, String label, String emoji) _getConfig(BuildContext context) {
+    switch (widget.status) {
+      case LeadStatusEnum.hot:
+        return (
+          context.customColors.statusHotBg,
+          context.customColors.statusHot,
+          widget.status.label,
+          widget.status.emoji,
+        );
+      case LeadStatusEnum.warm:
+        return (
+          context.customColors.statusWarmBg,
+          context.customColors.statusWarm,
+          widget.status.label,
+          widget.status.emoji,
+        );
+      case LeadStatusEnum.cold:
+        return (
+          context.customColors.statusColdBg,
+          context.customColors.statusCold,
+          widget.status.label,
+          widget.status.emoji,
+        );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +97,7 @@ class _StatusBadgeState extends State<StatusBadge>
       ),
     );
 
-    if (widget.status == LeadStatus.hot) {
+    if (widget.status == LeadStatusEnum.hot) {
       return AnimatedBuilder(
         animation: _pulseAnim,
         builder: (_, child) => Opacity(
