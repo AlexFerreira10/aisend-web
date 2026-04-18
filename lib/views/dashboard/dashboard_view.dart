@@ -390,10 +390,13 @@ class _CaptureLinksSection extends StatelessWidget {
                 ),
               ),
               const AppSpacerHorizontal.regular(),
-              Text(
-                '— compartilhe com seus clientes para iniciar conversa automaticamente',
-                style: context.textTheme.bodySmall?.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
+              Flexible(
+                child: Text(
+                  '— compartilhe com seus clientes para iniciar conversa automaticamente',
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

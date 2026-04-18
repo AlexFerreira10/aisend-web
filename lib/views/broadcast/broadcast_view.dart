@@ -7,7 +7,6 @@ import 'package:aisend/widgets/section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'widgets/upload_zone.dart';
-import 'widgets/broadcast_progress.dart';
 import 'widgets/sidebar_benefits.dart';
 import 'widgets/pull_leads_button.dart';
 import 'widgets/base_leads_chip.dart';
@@ -84,7 +83,6 @@ class _MainContent extends StatelessWidget {
           child: _ConfigSection(),
         ),
         const AppSpacerVertical.large(),
-        const AppSpacerVertical.large(),
         SectionCard(
           number: '3',
           title: 'Envio',
@@ -96,17 +94,10 @@ class _MainContent extends StatelessWidget {
         ],
         if (vm.hasPreview && !vm.isBroadcasting && !vm.isCompleted) ...[
           const AppSpacerVertical.large(),
-          PreviewCard(parts: vm.previewParts, onReset: vm.resetPreview),
-        ],
-        if (vm.isBroadcasting || vm.isCompleted) ...[
-          const AppSpacerVertical.large(),
-          BroadcastProgress(
-            progress: vm.progress,
-            sentCount: vm.sentCount,
-            repliedCount: vm.repliedCount,
-            errorCount: vm.errorCount,
-            currentLeadName: vm.currentLeadName,
-            isCompleted: vm.isCompleted,
+          PreviewCard(
+            parts: vm.previewParts,
+            onReset: vm.resetPreview,
+            onPartChanged: vm.updatePreviewPart,
           ),
         ],
         if (vm.broadcastError != null) ...[

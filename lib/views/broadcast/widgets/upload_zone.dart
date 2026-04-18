@@ -1,3 +1,5 @@
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:html' as html;
 import 'package:aisend/core/constants/app_dimensions.dart';
 import 'package:aisend/core/constants/app_spacer.dart';
 import 'package:aisend/core/theme/context_extension.dart';
@@ -63,6 +65,16 @@ class _DropZone extends StatefulWidget {
 
 class _DropZoneState extends State<_DropZone> {
   bool _hovered = false;
+
+  void _downloadTemplate() {
+    const csv = 'nome,telefone\nJoão Silva,5511999990001\nMaria Santos,5521988880002';
+    final bytes = html.Blob([csv], 'text/csv');
+    final url = html.Url.createObjectUrlFromBlob(bytes);
+    html.AnchorElement(href: url)
+      ..setAttribute('download', 'modelo_contatos.csv')
+      ..click();
+    html.Url.revokeObjectUrl(url);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -144,6 +156,26 @@ class _DropZoneState extends State<_DropZone> {
                     fontWeight: FontWeight.w600,
                     color: context.colorScheme.onSurface,
                   ),
+                ),
+              ),
+              const AppSpacerVertical.medium(),
+              GestureDetector(
+                onTap: _downloadTemplate,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Icon(Icons.download_rounded,
+                        size: 13,
+                        color: context.colorScheme.onSurfaceVariant),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Baixar modelo CSV',
+                      style: context.textTheme.labelSmall?.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

@@ -32,44 +32,51 @@ class ActionButton extends StatelessWidget {
       );
     }
 
-    if (vm.hasPreview) {
-      return _BroadcastButton(
-        enabled: vm.canBroadcast,
-        icon: Icons.send_rounded,
-        label: 'Confirmar e Disparar',
-        onTap: vm.canBroadcast
-            ? () => vm.startBroadcast(
-                  () => AppToast.show(
-                    context,
-                    'Disparo concluído! ${vm.sentCount} mensagens enviadas.',
-                  ),
-                )
-            : null,
-      );
-    }
+    // Dois botões: Pré-visualizar (opcional) + Enviar agora (principal)
+    final sendLabel = vm.sendMode == SendMode.scheduled ? 'Agendar Disparo' : 'Enviar agora';
+    final sendIcon = vm.sendMode == SendMode.scheduled ? Icons.schedule_rounded : Icons.send_rounded;
+    final canSend = vm.sendMode == SendMode.scheduled
+        ? (vm.canSchedule && !vm.isScheduling)
+        : vm.canBroadcast;
+    final sendAction = vm.sendMode == SendMode.scheduled
+        ? (canSend ? vm.scheduleBlast : null)
+        : (canSend
+            ? () => vm.startBroadcast(() {
+                  final total = vm.sentCount + vm.errorCount;
+                  final msg = vm.errorCount == 0
+                      ? 'Todas as $total solicitações foram feitas com sucesso!'
+                      : 'Foram feitas ${vm.sentCount} de $total solicitações. ${vm.errorCount} com erro.';
+                  AppToast.show(context, msg);
+                })
+            : () => _showValidationToast(context, vm));
 
-    if (vm.sendMode == SendMode.scheduled) {
-      final enabled = vm.canSchedule && !vm.isScheduling;
-      return _BroadcastButton(
-        enabled: enabled,
-        icon: vm.isScheduling
-            ? Icons.hourglass_empty_rounded
-            : Icons.schedule_rounded,
-        label: vm.isScheduling ? 'Agendando...' : 'Agendar Disparo',
-        onTap: enabled ? vm.scheduleBlast : null,
-      );
-    }
-
-    return _BroadcastButton(
-      enabled: vm.canPreview,
-      icon: vm.isPreviewing
-          ? Icons.hourglass_empty_rounded
-          : Icons.visibility_rounded,
-      label: vm.isPreviewing ? 'Gerando prévia...' : 'Pré-visualizar',
-      onTap: vm.canPreview
-          ? vm.previewBlast
-          : () => _showValidationToast(context, vm),
-      useGradient: false,
+    return Row(
+      children: <Widget>[
+        Expanded(
+          flex: 1,
+          child: _BroadcastButton(
+            enabled: !vm.isPreviewing,
+            icon: vm.isPreviewing
+                ? Icons.hourglass_empty_rounded
+                : Icons.visibility_rounded,
+            label: vm.isPreviewing ? 'Gerando...' : 'Pré-visualizar',
+            onTap: vm.isPreviewing
+                ? null
+                : (vm.canPreview ? vm.previewBlast : () => _showValidationToast(context, vm)),
+            useGradient: false,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          flex: 2,
+          child: _BroadcastButton(
+            enabled: canSend,
+            icon: sendIcon,
+            label: sendLabel,
+            onTap: sendAction,
+          ),
+        ),
+      ],
     );
   }
 

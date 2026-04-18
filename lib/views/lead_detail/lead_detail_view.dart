@@ -38,20 +38,23 @@ class _LeadDetailContent extends StatefulWidget {
 }
 
 class _LeadDetailContentState extends State<_LeadDetailContent> {
+  late final LeadDetailViewModel _vm;
+
   @override
   void initState() {
     super.initState();
-    context.read<LeadDetailViewModel>().addListener(_onVmChanged);
+    _vm = context.read<LeadDetailViewModel>();
+    _vm.addListener(_onVmChanged);
   }
 
   @override
   void dispose() {
-    context.read<LeadDetailViewModel>().removeListener(_onVmChanged);
+    _vm.removeListener(_onVmChanged);
     super.dispose();
   }
 
   void _onVmChanged() {
-    final error = context.read<LeadDetailViewModel>().toggleError;
+    final error = _vm.toggleError;
     if (error != null && mounted) {
       AppToast.show(context, error, type: ToastType.error);
     }

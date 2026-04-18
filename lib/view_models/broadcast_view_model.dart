@@ -238,6 +238,12 @@ class BroadcastViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updatePreviewPart(int index, String value) {
+    if (index < _previewParts.length) {
+      _previewParts[index] = value;
+    }
+  }
+
   // ─── Broadcast State ──────────────────────────────────────────────────────────
   bool _isBroadcasting = false;
   bool _isCompleted = false;
@@ -301,7 +307,10 @@ class BroadcastViewModel extends ChangeNotifier {
           'instancia': _selectedInstance!.id,
           'motivo': _contactReason,
           'contacts': batch,
-          if (_messageMode == MessageMode.fixed) 'fixedMessage': _fixedMessage.trim(),
+          if (_messageMode == MessageMode.fixed)
+            'fixedMessage': _fixedMessage.trim()
+          else if (_previewParts.isNotEmpty)
+            'baseMessage': _previewParts.join('|||'),
         };
         final response = await _broadcastService.sendBlast(payload);
 

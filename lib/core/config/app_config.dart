@@ -1,13 +1,8 @@
-import 'package:flutter/foundation.dart';
-
 abstract final class AppConfig {
   // ─── Backend URL ──────────────────────────────────────────────────────────
-  // debug mode  → localhost (flutter run)
-  // release mode → EC2      (flutter build web / flutter run --release)
-  static const String _localUrl = 'http://localhost:5113';
-  static const String _prodUrl  = 'http://56.125.23.170:5113';
+  static const String _prodUrl = 'http://56.125.23.170:5113';
 
-  static String get baseUrl => kReleaseMode ? _prodUrl : _localUrl;
+  static String get baseUrl => _prodUrl;
 
   // ─── Endpoints ───────────────────────────────────────────────────────────
   static String get healthEndpoint      => '$baseUrl/health';
