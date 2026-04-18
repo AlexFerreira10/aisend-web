@@ -56,6 +56,15 @@ class ApiClient {
     }
   }
 
+  Future<dynamic> put(String url, {required Map<String, dynamic> body}) async {
+    try {
+      final response = await _dio.put(url, data: body);
+      return _handleResponse(response);
+    } on DioException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
   Future<dynamic> delete(String url) async {
     try {
       final response = await _dio.delete(url);

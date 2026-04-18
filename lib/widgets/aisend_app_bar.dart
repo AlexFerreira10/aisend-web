@@ -58,6 +58,17 @@ class AiSendAppBar extends StatelessWidget implements PreferredSizeWidget {
               }
             },
           ),
+          const AppSpacerHorizontal.regular(),
+          _NavButton(
+            label: 'Follow-up',
+            icon: Icons.tune_rounded,
+            isActive: currentRoute == '/follow_up',
+            onTap: () {
+              if (currentRoute != '/follow_up') {
+                Navigator.pushReplacementNamed(context, '/follow_up');
+              }
+            },
+          ),
         ],
       ),
     );

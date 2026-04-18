@@ -26,6 +26,15 @@ abstract final class AppConfig {
   static String waitingEndpoint(String phone) =>
       '$baseUrl/api/leads/$phone/waiting';
 
+  static String followUpRulesEndpoint(String consultantId) =>
+      '$baseUrl/api/followuprules/$consultantId';
+
+  static String followUpRuleEndpoint(String id) =>
+      '$baseUrl/api/followuprules/$id';
+
+  static String followUpRuleToggleEndpoint(String id) =>
+      '$baseUrl/api/followuprules/$id/toggle';
+
   // ─── Config ───────────────────────────────────────────────────────────────
   static const Duration requestTimeout = Duration(seconds: 30);
 }
