@@ -12,6 +12,8 @@ class LeadsService {
   Future<LeadsResponse> fetchLeads({
     String? instanceName,
     String? classification,
+    bool? waitingHuman,
+    String? search,
     int page = 1,
     int pageSize = 20,
   }) async {
@@ -20,6 +22,8 @@ class LeadsService {
       'pageSize': pageSize.toString(),
       'instanceName': ?instanceName,
       'classification': ?classification,
+      'waitingHuman': ?waitingHuman?.toString(),
+      'search': ?search,
     };
     final uri =
         Uri.parse(AppConfig.leadsEndpoint).replace(queryParameters: params);

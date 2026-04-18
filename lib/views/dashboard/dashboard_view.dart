@@ -1,4 +1,3 @@
-import 'package:aisend/core/config/app_config.dart';
 import 'package:aisend/core/constants/app_dimensions.dart';
 import 'package:aisend/core/constants/app_spacer.dart';
 import 'package:aisend/core/theme/context_extension.dart';
@@ -23,11 +22,11 @@ class DashboardView extends StatelessWidget {
         builder: (context) {
           final vm = context.watch<DashboardViewModel>();
 
-          if (vm.isLoading && vm.leads.isEmpty) {
+          if (vm.isLoading && vm.activityLeads.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (vm.hasError && vm.leads.isEmpty) {
+          if (vm.hasError && vm.activityLeads.isEmpty) {
             return Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -64,8 +63,6 @@ class DashboardView extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children:  <Widget>[
                     _PageHeader(),
-                    const AppSpacerVertical.large(),
-                    _CaptureLinksSection(),
                     const AppSpacerVertical.large(),
                     _FilterRow(),
                     const AppSpacerVertical.extraLarge(),
@@ -242,7 +239,20 @@ class _KpiSection extends StatelessWidget {
   }
 }
 
-class _ActivitySection extends StatelessWidget {
+class _ActivitySection extends StatefulWidget {
+  @override
+  State<_ActivitySection> createState() => _ActivitySectionState();
+}
+
+class _ActivitySectionState extends State<_ActivitySection> {
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<DashboardViewModel>();
@@ -251,12 +261,13 @@ class _ActivitySection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
+        // ─── Header ────────────────────────────────────────────────────────
         Row(
-          children: <Widget> [
+          children: <Widget>[
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget> [
+                children: <Widget>[
                   Text(
                     'Atividade Recente',
                     style: context.textTheme.headlineMedium,
@@ -271,17 +282,71 @@ class _ActivitySection extends StatelessWidget {
                 ],
               ),
             ),
-            if (!isMobile) ...[
+            if (!isMobile)
               _GradientButton(
                 label: 'Criar Novo Disparo',
                 icon: Icons.add_rounded,
-                onTap: () => Navigator.pushReplacementNamed(context, '/broadcast'),
+                onTap: () =>
+                    Navigator.pushReplacementNamed(context, '/broadcast'),
               ),
-            ],
           ],
         ),
-        const AppSpacerVertical.extraLarge(),
-        LeadTable(leads: vm.leads),
+
+        const AppSpacerVertical.large(),
+
+        // ─── Search + Status Chips ─────────────────────────────────────────
+        if (isMobile)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _SearchField(controller: _searchController, vm: vm),
+              const AppSpacerVertical.regular(),
+              _StatusChips(vm: vm),
+            ],
+          )
+        else
+          Row(
+            children: [
+              SizedBox(
+                width: 240,
+                child: _SearchField(controller: _searchController, vm: vm),
+              ),
+              const AppSpacerHorizontal.large(),
+              _StatusChips(vm: vm),
+            ],
+          ),
+
+        const AppSpacerVertical.large(),
+
+        // ─── Table ─────────────────────────────────────────────────────────
+        if (vm.activityLoading)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
+              child: CircularProgressIndicator(),
+            ),
+          )
+        else if (vm.activityLeads.isEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Text(
+                'Nenhum lead encontrado.',
+                style: context.textTheme.bodyMedium?.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          )
+        else
+          LeadTable(leads: vm.activityLeads),
+
+        // ─── Pagination ────────────────────────────────────────────────────
+        if (vm.activityTotalPages > 1) ...[
+          const AppSpacerVertical.large(),
+          _Pagination(vm: vm),
+        ],
+
         if (isMobile) ...[
           const AppSpacerVertical.large(),
           SizedBox(
@@ -289,10 +354,182 @@ class _ActivitySection extends StatelessWidget {
             child: _GradientButton(
               label: 'Criar Novo Disparo',
               icon: Icons.add_rounded,
-              onTap: () => Navigator.pushReplacementNamed(context, '/broadcast'),
+              onTap: () =>
+                  Navigator.pushReplacementNamed(context, '/broadcast'),
             ),
           ),
         ],
+      ],
+    );
+  }
+}
+
+class _SearchField extends StatelessWidget {
+  final TextEditingController controller;
+  final DashboardViewModel vm;
+
+  const _SearchField({required this.controller, required this.vm});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        height: 40,
+        decoration: BoxDecoration(
+          color: context.colorScheme.surfaceContainer,
+          borderRadius: AppDimensions.radiusMedium,
+          border: Border.all(color: context.colorScheme.outline, width: 1),
+        ),
+        child: ValueListenableBuilder<TextEditingValue>(
+          valueListenable: controller,
+          builder: (context, value, _) => TextField(
+            controller: controller,
+            onChanged: vm.setActivitySearch,
+            style: context.textTheme.bodyMedium,
+            decoration: InputDecoration(
+              hintText: 'Buscar por nome...',
+              hintStyle: context.textTheme.bodyMedium?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                size: 18,
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+              suffixIcon: value.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 16),
+                      onPressed: () {
+                        controller.clear();
+                        vm.setActivitySearch('');
+                      },
+                    )
+                  : null,
+              border: InputBorder.none,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
+          ),
+        ),
+      );
+}
+
+class _StatusChips extends StatelessWidget {
+  final DashboardViewModel vm;
+  const _StatusChips({required this.vm});
+
+  static const _chips = [
+    (label: 'Todos', cls: null, waiting: null),
+    (label: 'Quente', cls: 'hot', waiting: null),
+    (label: 'Morno', cls: 'warm', waiting: null),
+    (label: 'Frio', cls: 'cold', waiting: null),
+    (label: 'Aguardando', cls: null, waiting: true),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    bool isActive(String? cls, bool? waiting) {
+      if (cls == null && waiting == null) {
+        return vm.activityClassification == null &&
+            vm.activityWaitingHuman == null;
+      }
+      return vm.activityClassification == cls &&
+          vm.activityWaitingHuman == waiting;
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: _chips.map((chip) {
+          final active = isActive(chip.cls, chip.waiting);
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: _Chip(
+              label: chip.label,
+              isActive: active,
+              onTap: () => vm.setActivityClassification(
+                chip.cls,
+                waitingHuman: chip.waiting,
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _Chip({
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: isActive
+                ? context.colorScheme.primary
+                : context.colorScheme.surfaceContainer,
+            borderRadius: AppDimensions.radiusMedium,
+            border: Border.all(
+              color: isActive
+                  ? context.colorScheme.primary
+                  : context.colorScheme.outline,
+              width: 1,
+            ),
+          ),
+          child: Text(
+            label,
+            style: context.textTheme.labelMedium?.copyWith(
+              color: isActive
+                  ? Colors.white
+                  : context.colorScheme.onSurfaceVariant,
+              fontWeight:
+                  isActive ? FontWeight.w600 : FontWeight.w400,
+            ),
+          ),
+        ),
+      );
+}
+
+class _Pagination extends StatelessWidget {
+  final DashboardViewModel vm;
+  const _Pagination({required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    final page = vm.activityPage;
+    final total = vm.activityTotalPages;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.chevron_left_rounded),
+          onPressed: page > 1 ? () => vm.setActivityPage(page - 1) : null,
+          color: context.colorScheme.onSurfaceVariant,
+        ),
+        Text(
+          'Página $page de $total',
+          style: context.textTheme.bodySmall?.copyWith(
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.chevron_right_rounded),
+          onPressed:
+              page < total ? () => vm.setActivityPage(page + 1) : null,
+          color: context.colorScheme.onSurfaceVariant,
+        ),
       ],
     );
   }
@@ -358,63 +595,6 @@ class _GradientButtonState extends State<_GradientButton> {
     );
 }
 
-class _CaptureLinksSection extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final vm = context.watch<DashboardViewModel>();
-    final instances = vm.instanceFilters.where((f) => f.id != null).toList();
-
-    if (instances.isEmpty) return const SizedBox.shrink();
-
-    return Container(
-      width: double.infinity,
-      padding: AppDimensions.paddingLarge(context),
-      decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainer,
-        borderRadius: AppDimensions.radiusLarge,
-        border: Border.all(color: context.colorScheme.outline, width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Icon(Icons.link_rounded,
-                  size: 16, color: context.colorScheme.primary),
-              const AppSpacerHorizontal.tiny(),
-              Text(
-                'Links de Captura',
-                style: context.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: context.colorScheme.primary,
-                ),
-              ),
-              const AppSpacerHorizontal.regular(),
-              Flexible(
-                child: Text(
-                  '— compartilhe com seus clientes para iniciar conversa automaticamente',
-                  style: context.textTheme.bodySmall?.copyWith(
-                    color: context.colorScheme.onSurfaceVariant,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const AppSpacerVertical.medium(),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: instances.map((inst) {
-              final url = AppConfig.captureUrl(inst.id!);
-              return _CaptureLinkChip(label: inst.label, url: url);
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _CaptureLinkChip extends StatefulWidget {
   final String label;

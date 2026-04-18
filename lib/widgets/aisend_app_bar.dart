@@ -188,17 +188,19 @@ class _NavButtonState extends State<_NavButton> {
                   ? context.colorScheme.onSurface
                   : context.colorScheme.onSurfaceVariant,
             ),
-            const AppSpacerHorizontal.tiny(),
-            Text(
-              widget.label,
-              style: context.textTheme.labelLarge?.copyWith(
-                color: widget.isActive
-                    ? Colors.white
-                    : _hovered
-                    ? context.colorScheme.onSurface
-                    : context.colorScheme.onSurfaceVariant,
+            if (MediaQuery.sizeOf(context).width >= 680) ...[
+              const AppSpacerHorizontal.tiny(),
+              Text(
+                widget.label,
+                style: context.textTheme.labelLarge?.copyWith(
+                  color: widget.isActive
+                      ? Colors.white
+                      : _hovered
+                      ? context.colorScheme.onSurface
+                      : context.colorScheme.onSurfaceVariant,
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),
