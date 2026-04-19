@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "AiSend [AWS Remote]",
+      "request": "launch",
+      "type": "dart",
+      "args": [
+        "--dart-define=BASE_URL=http://56.125.23.170:5113",
+        "--dart-define=API_KEY=aisend-test-2026"
+      ]
+    },
+    {
+      "name": "AiSend [Local API]",
+      "request": "launch",
+      "type": "dart",
+      "args": [
+        "--dart-define=BASE_URL=http://localhost:5113",
+        "--dart-define=API_KEY=aisend-test-2026"
+      ]
+    }
+  ]
+}
