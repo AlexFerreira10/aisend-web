@@ -1,6 +1,7 @@
 abstract final class AppConfig {
   // ─── Backend URL ──────────────────────────────────────────────────────────
   static const String _prodUrl = 'http://56.125.23.170:5113';
+  static const String apiKey = 'aisend-test-2026';
 
   static String get baseUrl => _prodUrl;
 

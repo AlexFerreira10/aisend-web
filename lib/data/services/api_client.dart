@@ -16,6 +16,7 @@ class ApiClient {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'X-Api-Key': AppConfig.apiKey,
       },
     ));
     _dio.interceptors.add(LogInterceptor(
