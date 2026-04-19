@@ -28,6 +28,9 @@ class AppProviders {
     Provider<ScheduleService>(
       create: (ctx) => ScheduleService(ctx.read<ApiClient>()),
     ),
+    Provider<FollowUpRulesService>(
+      create: (ctx) => FollowUpRulesService(ctx.read<ApiClient>()),
+    ),
     ChangeNotifierProvider<DashboardViewModel>(
       create: (ctx) => DashboardViewModel(
         leadsService: ctx.read<LeadsService>(),
@@ -45,9 +48,6 @@ class AppProviders {
     ),
     ChangeNotifierProvider<ScheduleViewModel>(
       create: (ctx) => ScheduleViewModel(service: ctx.read<ScheduleService>()),
-    ),
-    Provider<FollowUpRulesService>(
-      create: (ctx) => FollowUpRulesService(ctx.read<ApiClient>()),
     ),
     ChangeNotifierProvider<FollowUpViewModel>(
       create: (ctx) => FollowUpViewModel(

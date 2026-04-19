@@ -69,6 +69,10 @@ class ScheduleView extends StatelessWidget {
                       ),
                     ),
                     const AppSpacerVertical.extraLarge(),
+                    if (vm.consultantNames.isNotEmpty)
+                      _ConsultantFilter(vm: vm),
+                    if (vm.consultantNames.isNotEmpty)
+                      const AppSpacerVertical.large(),
                     if (vm.items.isEmpty)
                       _EmptyState()
                     else
@@ -80,6 +84,29 @@ class ScheduleView extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class _ConsultantFilter extends StatelessWidget {
+  final ScheduleViewModel vm;
+  const _ConsultantFilter({required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButtonFormField<String?>(
+      initialValue: vm.selectedConsultant,
+      decoration: const InputDecoration(
+        labelText: 'Consultor',
+        prefixIcon: Icon(Icons.person_rounded),
+      ),
+      items: [
+        const DropdownMenuItem(value: null, child: Text('Todos')),
+        ...vm.consultantNames.map(
+          (name) => DropdownMenuItem(value: name, child: Text(name)),
+        ),
+      ],
+      onChanged: vm.setConsultantFilter,
     );
   }
 }

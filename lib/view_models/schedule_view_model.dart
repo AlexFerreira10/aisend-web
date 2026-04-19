@@ -13,11 +13,30 @@ class ScheduleViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   String? _cancelError;
+  String? _selectedConsultant;
 
-  List<ScheduledBlastItem> get items => _items;
+  List<ScheduledBlastItem> get items => _selectedConsultant == null
+      ? _items
+      : _items.where((i) => i.consultantName == _selectedConsultant).toList();
   bool get isLoading => _isLoading;
   String? get error => _error;
   String? get cancelError => _cancelError;
+  String? get selectedConsultant => _selectedConsultant;
+
+  List<String> get consultantNames {
+    final names = _items
+        .map((i) => i.consultantName)
+        .whereType<String>()
+        .toSet()
+        .toList()
+      ..sort();
+    return names;
+  }
+
+  void setConsultantFilter(String? name) {
+    _selectedConsultant = name;
+    notifyListeners();
+  }
 
   Future<void> loadScheduled() async {
     _isLoading = true;

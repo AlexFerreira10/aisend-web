@@ -16,6 +16,8 @@ class SidebarBenefits extends StatelessWidget {
       _AntiBanCard(),
       const AppSpacerVertical.large(),
       _StatisticsCard(),
+      const AppSpacerVertical.large(),
+      const _SendModesCard(),
     ],
   );
 }
@@ -125,6 +127,67 @@ class _StatisticsCard extends StatelessWidget {
               ),
             )
             .toList(),
+      ),
+    );
+  }
+}
+
+class _SendModesCard extends StatelessWidget {
+  const _SendModesCard();
+
+  static const _modes = [
+    (
+      icon: Icons.send_rounded,
+      label: 'Imediato',
+      description: 'Dispara para todos os leads agora, com intervalo aleatório entre mensagens para proteger o número.',
+    ),
+    (
+      icon: Icons.schedule_rounded,
+      label: 'Agendado',
+      description: 'Programa o disparo para uma data e hora específica. Ideal para campanhas pontuais.',
+    ),
+    (
+      icon: Icons.repeat_rounded,
+      label: 'Recorrente',
+      description: 'Cria uma regra automática de follow-up para leads que não responderam em X dias.',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return _SideCard(
+      title: 'Modos de Envio',
+      child: Column(
+        children: _modes.map((m) => Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: context.colorScheme.primaryContainer,
+                  borderRadius: AppDimensions.radiusMedium,
+                ),
+                child: Icon(m.icon, size: 14, color: context.colorScheme.primary),
+              ),
+              const AppSpacerHorizontal.regular(),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(m.label,
+                        style: context.textTheme.labelMedium
+                            ?.copyWith(fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 2),
+                    Text(m.description, style: context.textTheme.bodySmall
+                        ?.copyWith(color: context.colorScheme.onSurfaceVariant)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        )).toList(),
       ),
     );
   }
