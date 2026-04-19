@@ -1,5 +1,6 @@
 import 'package:aisend/core/config/app_config.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'schemas/api_exception.dart';
 
 
@@ -19,13 +20,15 @@ class ApiClient {
         'X-Api-Key': AppConfig.apiKey,
       },
     ));
-    _dio.interceptors.add(LogInterceptor(
-      requestBody: true,
-      responseBody: true,
-      requestHeader: true,
-      responseHeader: false,
-      error: true,
-    ));
+    if (kDebugMode) {
+      _dio.interceptors.add(LogInterceptor(
+        requestBody: true,
+        responseBody: true,
+        requestHeader: true,
+        responseHeader: false,
+        error: true,
+      ));
+    }
   }
 
   Future<dynamic> get(String url) => getUri(Uri.parse(url));
