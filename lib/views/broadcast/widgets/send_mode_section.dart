@@ -18,7 +18,7 @@ class SendModeSection extends StatelessWidget {
         Row(
           children: <Widget>[
             ModeChip(
-              label: 'Enviar agora',
+              label: 'Imediato',
               icon: Icons.send_rounded,
               selected: vm.sendMode == SendMode.immediate,
               onTap: () => vm.setSendMode(SendMode.immediate),
@@ -29,6 +29,13 @@ class SendModeSection extends StatelessWidget {
               icon: Icons.schedule_rounded,
               selected: vm.sendMode == SendMode.scheduled,
               onTap: () => vm.setSendMode(SendMode.scheduled),
+            ),
+            const AppSpacerHorizontal.regular(),
+            ModeChip(
+              label: 'Recorrente',
+              icon: Icons.repeat_rounded,
+              selected: vm.sendMode == SendMode.recurrent,
+              onTap: () => vm.setSendMode(SendMode.recurrent),
             ),
           ],
         ),
@@ -41,9 +48,9 @@ class SendModeSection extends StatelessWidget {
           if (vm.scheduleSuccess) ...[
             const AppSpacerVertical.medium(),
             Row(
-              children:  <Widget>[
+              children: <Widget>[
                 const Icon(Icons.check_circle_rounded,
-                    size: 16, color: Colors.green,),
+                    size: 16, color: Colors.green),
                 const AppSpacerHorizontal.tiny(),
                 Text(
                   'Disparo agendado com sucesso! Acompanhe em Agendamentos.',
@@ -62,10 +69,196 @@ class SendModeSection extends StatelessWidget {
             ),
           ],
         ],
+        if (vm.sendMode == SendMode.recurrent) ...[
+          const AppSpacerVertical.large(),
+          _RecurrentPanel(vm: vm),
+          if (vm.ruleError != null) ...[
+            const AppSpacerVertical.medium(),
+            Text(
+              vm.ruleError!,
+              style: context.textTheme.bodySmall
+                  ?.copyWith(color: context.colorScheme.error),
+            ),
+          ],
+        ],
       ],
     );
   }
 }
+
+// ─── Recurrent Configuration Panel ───────────────────────────────────────────
+
+class _RecurrentPanel extends StatelessWidget {
+  final BroadcastViewModel vm;
+  const _RecurrentPanel({required this.vm});
+
+  static const _classifications = [
+    ('hot', '🔥', 'Quente'),
+    ('warm', '☀️', 'Morno'),
+    ('cold', '❄️', 'Frio'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: AppDimensions.paddingLarge(context),
+      decoration: BoxDecoration(
+        color: context.colorScheme.surfaceContainer,
+        borderRadius: AppDimensions.radiusLarge,
+        border: Border.all(color: context.colorScheme.outline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Configuração da Recorrência',
+              style: context.textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w700)),
+          const AppSpacerVertical.large(),
+          _ConfigRow(
+            label: 'Dias sem resposta',
+            child: _Stepper(
+              value: vm.followUpDays,
+              min: 1,
+              max: 90,
+              onChanged: vm.setFollowUpDays,
+            ),
+          ),
+          const AppSpacerVertical.regular(),
+          _ConfigRow(
+            label: 'Horário de envio',
+            child: DropdownButton<int>(
+              value: vm.followUpHour,
+              underline: const SizedBox(),
+              isDense: true,
+              items: List.generate(24, (i) => i)
+                  .map((h) => DropdownMenuItem(
+                        value: h,
+                        child: Text('${h.toString().padLeft(2, '0')}:00'),
+                      ))
+                  .toList(),
+              onChanged: (v) {
+                if (v != null) vm.setFollowUpHour(v);
+              },
+            ),
+          ),
+          const AppSpacerVertical.regular(),
+          _ConfigRow(
+            label: 'Tentativas por lead',
+            child: _Stepper(
+              value: vm.followUpMaxAttempts,
+              min: 1,
+              max: 10,
+              onChanged: vm.setFollowUpMaxAttempts,
+            ),
+          ),
+          const AppSpacerVertical.large(),
+          Text('Público-alvo',
+              style: context.textTheme.bodySmall?.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600)),
+          const AppSpacerVertical.small(),
+          Wrap(
+            spacing: 8,
+            children: _classifications.map((opt) {
+              final selected = vm.followUpClassifications.contains(opt.$1);
+              return GestureDetector(
+                onTap: () => vm.toggleFollowUpClassification(opt.$1),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? context.colorScheme.primaryContainer
+                        : context.colorScheme.surface,
+                    borderRadius: AppDimensions.radiusRound,
+                    border: Border.all(
+                      color: selected
+                          ? context.colorScheme.primary
+                          : context.colorScheme.outline,
+                    ),
+                  ),
+                  child: Text(
+                    '${opt.$2} ${opt.$3}',
+                    style: context.textTheme.labelMedium?.copyWith(
+                      color: selected
+                          ? context.colorScheme.onPrimaryContainer
+                          : context.colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ConfigRow extends StatelessWidget {
+  final String label;
+  final Widget child;
+  const _ConfigRow({required this.label, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(label,
+              style: context.textTheme.bodyMedium
+                  ?.copyWith(fontWeight: FontWeight.w500)),
+        ),
+        child,
+      ],
+    );
+  }
+}
+
+class _Stepper extends StatelessWidget {
+  final int value;
+  final int min;
+  final int max;
+  final ValueChanged<int> onChanged;
+  const _Stepper(
+      {required this.value,
+      required this.min,
+      required this.max,
+      required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.remove_rounded),
+          iconSize: 18,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          onPressed: value > min ? () => onChanged(value - 1) : null,
+        ),
+        SizedBox(
+          width: 32,
+          child: Text('$value',
+              textAlign: TextAlign.center,
+              style: context.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w700)),
+        ),
+        IconButton(
+          icon: const Icon(Icons.add_rounded),
+          iconSize: 18,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          onPressed: value < max ? () => onChanged(value + 1) : null,
+        ),
+      ],
+    );
+  }
+}
+
+// ─── DateTime Picker ──────────────────────────────────────────────────────────
 
 class DateTimePicker extends StatelessWidget {
   final DateTime? value;
@@ -122,7 +315,7 @@ class DateTimePicker extends StatelessWidget {
           ),
         ),
         child: Row(
-          children:  <Widget>[
+          children: <Widget>[
             Icon(
               Icons.calendar_today_rounded,
               size: 16,

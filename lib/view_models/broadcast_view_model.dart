@@ -1,32 +1,37 @@
 import 'dart:convert';
 import 'package:aisend/data/services/schemas/api_exception.dart';
+import 'package:aisend/models/follow_up_rule_model.dart';
 import 'package:aisend/models/instance_model.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import '../data/services/leads_service.dart';
 import '../data/services/broadcast_service.dart';
 import '../data/services/consultants_service.dart';
+import '../data/services/follow_up_rules_service.dart';
 import '../data/services/schedule_service.dart';
 import '../models/lead_model.dart';
 
 enum MessageMode { aiGenerated, fixed }
-enum SendMode { immediate, scheduled }
+enum SendMode { immediate, scheduled, recurrent }
 
 class BroadcastViewModel extends ChangeNotifier {
   final LeadsService _leadsService;
   final BroadcastService _broadcastService;
   final ConsultantsService _consultantsService;
   final ScheduleService _scheduleService;
+  final FollowUpRulesService _followUpRulesService;
 
   BroadcastViewModel({
     required LeadsService leadsService,
     required BroadcastService broadcastService,
     required ConsultantsService consultantsService,
     required ScheduleService scheduleService,
+    required FollowUpRulesService followUpRulesService,
   })  : _leadsService = leadsService,
         _broadcastService = broadcastService,
         _consultantsService = consultantsService,
-        _scheduleService = scheduleService {
+        _scheduleService = scheduleService,
+        _followUpRulesService = followUpRulesService {
     _loadInstances();
   }
 
@@ -385,6 +390,75 @@ class BroadcastViewModel extends ChangeNotifier {
       _scheduleError = 'Erro ao agendar: $e';
     } finally {
       _isScheduling = false;
+      notifyListeners();
+    }
+  }
+
+  // ─── Follow-up Rule (SendMode.recurrent) ─────────────────────────────────────
+  int _followUpDays = 7;
+  int _followUpHour = 9;
+  int _followUpMaxAttempts = 3;
+  List<String> _followUpClassifications = ['warm', 'hot'];
+  bool _isCreatingRule = false;
+  bool _ruleCreated = false;
+  String? _ruleError;
+
+  int get followUpDays => _followUpDays;
+  int get followUpHour => _followUpHour;
+  int get followUpMaxAttempts => _followUpMaxAttempts;
+  List<String> get followUpClassifications => _followUpClassifications;
+  bool get isCreatingRule => _isCreatingRule;
+  bool get ruleCreated => _ruleCreated;
+  String? get ruleError => _ruleError;
+
+  void setFollowUpDays(int v) { _followUpDays = v.clamp(1, 90); notifyListeners(); }
+  void setFollowUpHour(int v) { _followUpHour = v.clamp(0, 23); notifyListeners(); }
+  void setFollowUpMaxAttempts(int v) { _followUpMaxAttempts = v.clamp(1, 10); notifyListeners(); }
+  void toggleFollowUpClassification(String cls) {
+    final updated = List<String>.from(_followUpClassifications);
+    if (updated.contains(cls)) {
+      if (updated.length > 1) updated.remove(cls);
+    } else {
+      updated.add(cls);
+    }
+    _followUpClassifications = updated;
+    notifyListeners();
+  }
+
+  bool get canCreateRule =>
+      _selectedInstance != null && _hasValidMessage && !_isCreatingRule;
+
+  Future<void> createFollowUpRule(VoidCallback onSuccess) async {
+    if (!canCreateRule) return;
+    _isCreatingRule = true;
+    _ruleCreated = false;
+    _ruleError = null;
+    notifyListeners();
+    try {
+      final consultantId = _selectedInstance!.consultantId!;
+      final classLabels = _followUpClassifications.map((c) =>
+          c == 'hot' ? 'Quente' : c == 'warm' ? 'Morno' : 'Frio').join(' + ');
+      final name = '$classLabels — ${_followUpDays}d';
+      final rule = FollowUpRuleModel(
+        id: '',
+        consultantId: consultantId,
+        name: name,
+        daysWithoutResponse: _followUpDays,
+        scheduleHour: _followUpHour,
+        maxAttempts: _followUpMaxAttempts,
+        targetClassifications: _followUpClassifications,
+        messageMode: _messageMode == MessageMode.fixed ? 'fixed' : 'ai',
+        fixedMessage: _messageMode == MessageMode.fixed ? _fixedMessage.trim() : null,
+        customPrompt: _messageMode == MessageMode.aiGenerated ? _contactReason.trim() : null,
+      );
+      await _followUpRulesService.createRule(consultantId, rule);
+      _ruleCreated = true;
+      notifyListeners();
+      onSuccess();
+    } catch (e) {
+      _ruleError = 'Erro ao criar regra: $e';
+    } finally {
+      _isCreatingRule = false;
       notifyListeners();
     }
   }

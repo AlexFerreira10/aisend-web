@@ -7,6 +7,7 @@ class FollowUpRuleModel {
   final List<String> targetClassifications;
   final String messageMode;
   final String? fixedMessage;
+  final String? customPrompt;
   final int maxAttempts;
   final int scheduleHour;
 
@@ -19,6 +20,7 @@ class FollowUpRuleModel {
     this.targetClassifications = const ['warm', 'hot'],
     this.messageMode = 'ai',
     this.fixedMessage,
+    this.customPrompt,
     this.maxAttempts = 3,
     this.scheduleHour = 9,
   });
@@ -37,6 +39,7 @@ class FollowUpRuleModel {
                 ['warm', 'hot'],
         messageMode: json['messageMode'] as String? ?? 'ai',
         fixedMessage: json['fixedMessage'] as String?,
+        customPrompt: json['customPrompt'] as String?,
         maxAttempts: json['maxAttempts'] as int? ?? 3,
         scheduleHour: json['scheduleHour'] as int? ?? 9,
       );
@@ -48,6 +51,7 @@ class FollowUpRuleModel {
         'targetClassifications': targetClassifications,
         'messageMode': messageMode,
         'fixedMessage': fixedMessage,
+        'customPrompt': customPrompt,
         'maxAttempts': maxAttempts,
         'scheduleHour': scheduleHour,
       };
@@ -59,6 +63,7 @@ class FollowUpRuleModel {
     List<String>? targetClassifications,
     String? messageMode,
     String? fixedMessage,
+    String? customPrompt,
     int? maxAttempts,
     int? scheduleHour,
   }) =>
@@ -72,15 +77,10 @@ class FollowUpRuleModel {
             targetClassifications ?? this.targetClassifications,
         messageMode: messageMode ?? this.messageMode,
         fixedMessage: fixedMessage ?? this.fixedMessage,
+        customPrompt: customPrompt ?? this.customPrompt,
         maxAttempts: maxAttempts ?? this.maxAttempts,
         scheduleHour: scheduleHour ?? this.scheduleHour,
       );
 
   FollowUpRuleModel withEnabled(bool value) => copyWith(isEnabled: value);
 }
-
-FollowUpRuleModel emptyRule(String consultantId) => FollowUpRuleModel(
-      id: '',
-      consultantId: consultantId,
-      name: 'Nova regra',
-    );

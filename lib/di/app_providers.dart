@@ -40,6 +40,7 @@ class AppProviders {
         broadcastService: ctx.read<BroadcastService>(),
         consultantsService: ctx.read<ConsultantsService>(),
         scheduleService: ctx.read<ScheduleService>(),
+        followUpRulesService: ctx.read<FollowUpRulesService>(),
       ),
     ),
     ChangeNotifierProvider<ScheduleViewModel>(

@@ -32,6 +32,28 @@ class ActionButton extends StatelessWidget {
       );
     }
 
+    if (vm.sendMode == SendMode.recurrent) {
+      if (vm.ruleCreated) {
+        return const _BroadcastButton(
+          enabled: false,
+          icon: Icons.check_circle_rounded,
+          label: 'Regra Criada!',
+          onTap: null,
+        );
+      }
+      return _BroadcastButton(
+        enabled: !vm.isCreatingRule && vm.canCreateRule,
+        icon: vm.isCreatingRule
+            ? Icons.hourglass_empty_rounded
+            : Icons.repeat_rounded,
+        label: vm.isCreatingRule ? 'Criando...' : 'Criar Regra',
+        onTap: vm.canCreateRule
+            ? () => vm.createFollowUpRule(() => AppToast.show(context,
+                'Regra de follow-up criada com sucesso!'))
+            : () => _showValidationToast(context, vm),
+      );
+    }
+
     // Dois botões: Pré-visualizar (opcional) + Enviar agora (principal)
     final sendLabel = vm.sendMode == SendMode.scheduled ? 'Agendar Disparo' : 'Enviar agora';
     final sendIcon = vm.sendMode == SendMode.scheduled ? Icons.schedule_rounded : Icons.send_rounded;

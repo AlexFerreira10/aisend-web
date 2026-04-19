@@ -10,6 +10,7 @@ class AppActionButton extends StatefulWidget {
   final String label;
   final VoidCallback? onTap;
   final bool useGradient;
+  final bool fullWidth;
 
   const AppActionButton({
     super.key,
@@ -18,6 +19,7 @@ class AppActionButton extends StatefulWidget {
     required this.label,
     required this.onTap,
     this.useGradient = true,
+    this.fullWidth = true,
   });
 
   @override
@@ -36,8 +38,10 @@ class _AppActionButtonState extends State<AppActionButton> {
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          width: double.infinity,
-          padding: AppDimensions.paddingVerticalLarge(context),
+          width: widget.fullWidth ? double.infinity : null,
+          padding: widget.fullWidth
+              ? AppDimensions.paddingVerticalLarge(context)
+              : const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           alignment: Alignment.center,
           decoration: BoxDecoration(
             gradient: (widget.enabled && widget.useGradient) ? context.customColors.primaryGradient : null,
