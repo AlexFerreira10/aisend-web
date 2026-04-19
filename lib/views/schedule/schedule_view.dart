@@ -6,6 +6,7 @@ import 'package:aisend/data/services/schedule_service.dart';
 import 'package:aisend/models/enums/blast_status_enum.dart';
 import 'package:aisend/view_models/schedule_view_model.dart';
 import 'package:aisend/widgets/aisend_app_bar.dart';
+import 'package:aisend/widgets/aisend_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -24,6 +25,7 @@ class ScheduleView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const AiSendAppBar(currentRoute: '/schedule'),
+      drawer: const AiSendDrawer(currentRoute: '/schedule'),
       body: Consumer<ScheduleViewModel>(
         builder: (context, vm, _) {
           if (vm.isLoading) {

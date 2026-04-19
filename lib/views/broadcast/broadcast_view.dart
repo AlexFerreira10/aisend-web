@@ -3,6 +3,7 @@ import 'package:aisend/core/constants/app_spacer.dart';
 import 'package:aisend/core/theme/context_extension.dart';
 import 'package:aisend/view_models/broadcast_view_model.dart';
 import 'package:aisend/widgets/aisend_app_bar.dart';
+import 'package:aisend/widgets/aisend_drawer.dart';
 import 'package:aisend/widgets/section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -23,6 +24,7 @@ class BroadcastView extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
       appBar: const AiSendAppBar(currentRoute: '/broadcast'),
+      drawer: const AiSendDrawer(currentRoute: '/broadcast'),
       body: SingleChildScrollView(
         child: Padding(
           padding: AppDimensions.extraLarge(context).isFinite

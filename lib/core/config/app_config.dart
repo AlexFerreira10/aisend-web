@@ -1,9 +1,19 @@
 abstract final class AppConfig {
-  // ─── Backend URL ──────────────────────────────────────────────────────────
-  static const String _prodUrl = 'http://56.125.23.170:5113';
-  static const String apiKey = 'aisend-test-2026';
+  // ─── Backend URL & Config ──────────────────────────────────────────────────
+  
+  /// The base URL for the backend API. 
+  /// Can be overridden via --dart-define=BASE_URL=...
+  static const String baseUrl = String.fromEnvironment(
+    'BASE_URL', 
+    defaultValue: 'http://56.125.23.170:5113', // Standard Production URL
+  );
 
-  static String get baseUrl => _prodUrl;
+  /// The security API Key.
+  /// Can be overridden via --dart-define=API_KEY=...
+  static const String apiKey = String.fromEnvironment(
+    'API_KEY', 
+    defaultValue: 'aisend-test-2026',
+  );
 
   // ─── Endpoints ───────────────────────────────────────────────────────────
   static String get healthEndpoint      => '$baseUrl/health';

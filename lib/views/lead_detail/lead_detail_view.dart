@@ -1,16 +1,17 @@
+import 'package:aisend/core/constants/app_dimensions.dart';
+import 'package:aisend/core/constants/app_spacer.dart';
+import 'package:aisend/core/theme/context_extension.dart';
+import 'package:aisend/core/theme/custom_colors_extension.dart';
+import 'package:aisend/core/utils/app_toast.dart';
+import 'package:aisend/data/services/leads_service.dart';
+import 'package:aisend/models/lead_model.dart';
+import 'package:aisend/models/message_model.dart';
+import 'package:aisend/view_models/lead_detail_view_model.dart';
+import 'package:aisend/views/dashboard/widgets/status_badge.dart';
+import 'package:aisend/widgets/aisend_app_bar.dart';
+import 'package:aisend/widgets/aisend_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../core/theme/context_extension.dart';
-import '../../core/theme/custom_colors_extension.dart';
-import '../../core/constants/app_dimensions.dart';
-import '../../core/constants/app_spacer.dart';
-import '../../core/utils/app_toast.dart';
-import '../../data/services/leads_service.dart';
-import '../../models/lead_model.dart';
-import '../../models/message_model.dart';
-import '../../view_models/lead_detail_view_model.dart';
-import '../../widgets/aisend_app_bar.dart';
-import '../dashboard/widgets/status_badge.dart';
 
 class LeadDetailView extends StatelessWidget {
   final LeadModel lead;
@@ -18,15 +19,11 @@ class LeadDetailView extends StatelessWidget {
   const LeadDetailView({super.key, required this.lead});
 
   @override
-  Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (ctx) => LeadDetailViewModel(
-        leadsService: ctx.read<LeadsService>(),
-        lead: lead,
-      ),
-      child: _LeadDetailContent(lead: lead),
-    );
-  }
+  Widget build(BuildContext context) => ChangeNotifierProvider(
+    create: (ctx) =>
+        LeadDetailViewModel(leadsService: ctx.read<LeadsService>(), lead: lead),
+    child: _LeadDetailContent(lead: lead),
+  );
 }
 
 class _LeadDetailContent extends StatefulWidget {
@@ -66,25 +63,26 @@ class _LeadDetailContentState extends State<_LeadDetailContent> {
 
     return Scaffold(
       appBar: const AiSendAppBar(currentRoute: '/'),
+      drawer: const AiSendDrawer(currentRoute: '/'),
       body: Column(
-        children: [
+        children: <Widget>[
           _LeadHeader(lead: widget.lead, vm: vm),
           Divider(height: 1, color: context.colorScheme.outline),
           Expanded(
             child: vm.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : vm.hasError
-                    ? _ErrorState(onRetry: vm.loadMessages)
-                    : vm.messages.isEmpty
-                        ? Center(
-                            child: Text(
-                              'Nenhuma mensagem ainda',
-                              style: context.textTheme.bodyLarge?.copyWith(
-                                color: context.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          )
-                        : _MessageList(messages: vm.messages),
+                ? _ErrorState(onRetry: vm.loadMessages)
+                : vm.messages.isEmpty
+                ? Center(
+                    child: Text(
+                      'Nenhuma mensagem ainda',
+                      style: context.textTheme.bodyLarge?.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  )
+                : _MessageList(messages: vm.messages),
           ),
         ],
       ),
@@ -100,65 +98,93 @@ class _LeadHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = context.isMobile;
+
     return Container(
-      padding: AppDimensions.paddingExtraLarge(context),
+      padding: AppDimensions.paddingLarge(context),
       color: context.colorScheme.surfaceContainer,
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back_rounded),
-            onPressed: () => Navigator.pop(context),
-          ),
-          const AppSpacerHorizontal.medium(),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+      child: Column(
+        children: <Widget>[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              IconButton(
+                icon: const Icon(Icons.arrow_back_rounded),
+                onPressed: () => Navigator.pop(context),
+              ),
+              const AppSpacerHorizontal.medium(),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      lead.name,
-                      style: context.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          lead.name,
+                          style: context.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        StatusBadge(status: lead.status),
+                        if (vm.waitingHuman) _WaitingBadge(),
+                      ],
                     ),
-                    const AppSpacerHorizontal.medium(),
-                    StatusBadge(status: lead.status),
-                    if (vm.waitingHuman) ...[
-                      const AppSpacerHorizontal.medium(),
-                      _WaitingBadge(),
-                    ],
+                    const AppSpacerVertical.tiny(),
+                    Text(lead.phone, style: context.textTheme.bodySmall),
                   ],
                 ),
-                const AppSpacerVertical.tiny(),
-                Text(lead.phone, style: context.textTheme.bodySmall),
+              ),
+              if (!isMobile) ...[
+                const AppSpacerHorizontal.medium(),
+                _ActionButton(vm: vm),
               ],
-            ),
+            ],
           ),
-          vm.updatingWaiting
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : OutlinedButton.icon(
-                  onPressed: vm.toggleWaitingHuman,
-                  icon: Icon(
-                    vm.waitingHuman
-                        ? Icons.smart_toy_rounded
-                        : Icons.person_rounded,
-                    size: 16,
-                  ),
-                  label: Text(
-                    vm.waitingHuman ? 'Devolver ao Bot' : 'Assumir Atendimento',
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: vm.waitingHuman
-                        ? context.customColors.success
-                        : context.colorScheme.primary,
-                  ),
-                ),
+          if (isMobile) ...[
+            const AppSpacerVertical.medium(),
+            SizedBox(
+              width: double.infinity,
+              child: _ActionButton(vm: vm),
+            ),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final LeadDetailViewModel vm;
+  const _ActionButton({required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    if (vm.updatingWaiting) {
+      return const Center(
+        child: SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+
+    return OutlinedButton.icon(
+      onPressed: vm.toggleWaitingHuman,
+      icon: Icon(
+        vm.waitingHuman ? Icons.smart_toy_rounded : Icons.person_rounded,
+        size: 16,
+      ),
+      label: Text(vm.waitingHuman ? 'Devolver ao Bot' : 'Assumir Atendimento'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: vm.waitingHuman
+            ? context.customColors.success
+            : context.colorScheme.primary,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
     );
   }
@@ -166,33 +192,30 @@ class _LeadHeader extends StatelessWidget {
 
 class _WaitingBadge extends StatelessWidget {
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: context.colorScheme.error.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: context.colorScheme.error.withValues(alpha: 0.3),
-        ),
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+    decoration: BoxDecoration(
+      color: context.colorScheme.error.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(
+        color: context.colorScheme.error.withValues(alpha: 0.3),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.person_rounded,
-              size: 14, color: context.colorScheme.error),
-          const SizedBox(width: 4),
-          Text(
-            'Aguardando humano',
-            style: context.textTheme.labelSmall?.copyWith(
-              color: context.colorScheme.error,
-              fontWeight: FontWeight.w600,
-            ),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Icon(Icons.person_rounded, size: 14, color: context.colorScheme.error),
+        const SizedBox(width: 4),
+        Text(
+          'Aguardando humano',
+          style: context.textTheme.labelSmall?.copyWith(
+            color: context.colorScheme.error,
+            fontWeight: FontWeight.w600,
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
 }
 
 class _ErrorState extends StatelessWidget {
@@ -200,25 +223,22 @@ class _ErrorState extends StatelessWidget {
   const _ErrorState({required this.onRetry});
 
   @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.error_outline,
-              size: 48, color: context.colorScheme.onSurfaceVariant),
-          const AppSpacerVertical.medium(),
-          Text('Erro ao carregar mensagens',
-              style: context.textTheme.bodyLarge),
-          const AppSpacerVertical.regular(),
-          TextButton(
-            onPressed: onRetry,
-            child: const Text('Tentar novamente'),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Center(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Icon(
+          Icons.error_outline,
+          size: 48,
+          color: context.colorScheme.onSurfaceVariant,
+        ),
+        const AppSpacerVertical.medium(),
+        Text('Erro ao carregar mensagens', style: context.textTheme.bodyLarge),
+        const AppSpacerVertical.regular(),
+        TextButton(onPressed: onRetry, child: const Text('Tentar novamente')),
+      ],
+    ),
+  );
 }
 
 class _MessageList extends StatelessWidget {
@@ -226,13 +246,11 @@ class _MessageList extends StatelessWidget {
   const _MessageList({required this.messages});
 
   @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: AppDimensions.paddingExtraLarge(context),
-      itemCount: messages.length,
-      itemBuilder: (context, i) => _MessageBubble(message: messages[i]),
-    );
-  }
+  Widget build(BuildContext context) => ListView.builder(
+    padding: AppDimensions.paddingExtraLarge(context),
+    itemCount: messages.length,
+    itemBuilder: (context, i) => _MessageBubble(message: messages[i]),
+  );
 }
 
 class _MessageBubble extends StatelessWidget {
@@ -246,8 +264,9 @@ class _MessageBubble extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
-        mainAxisAlignment:
-            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isUser) ...[
@@ -258,15 +277,17 @@ class _MessageBubble extends StatelessWidget {
                 gradient: context.customColors.primaryGradient,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.bolt_rounded,
-                  color: Colors.white, size: 18),
+              child: const Icon(
+                Icons.bolt_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
             ),
             const SizedBox(width: 8),
           ],
           Flexible(
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               constraints: BoxConstraints(
                 maxWidth: MediaQuery.sizeOf(context).width * 0.6,
               ),

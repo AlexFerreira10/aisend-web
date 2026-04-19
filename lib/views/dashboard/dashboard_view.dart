@@ -11,6 +11,7 @@ import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:provider/provider.dart';
 import 'widgets/kpi_card.dart';
 import 'widgets/lead_table.dart';
+import 'package:aisend/widgets/aisend_drawer.dart';
 
 class DashboardView extends StatelessWidget {
   const DashboardView({super.key});
@@ -18,6 +19,7 @@ class DashboardView extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
       appBar: const AiSendAppBar(currentRoute: '/'),
+      drawer: const AiSendDrawer(currentRoute: '/'),
       body: Builder(
         builder: (context) {
           final vm = context.watch<DashboardViewModel>();
@@ -577,6 +579,7 @@ class _GradientButtonState extends State<_GradientButton> {
                 : [],
           ),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children:<Widget> [
               Icon(widget.icon, size: 16, color: Colors.white),

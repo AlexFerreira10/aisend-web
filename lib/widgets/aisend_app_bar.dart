@@ -13,7 +13,12 @@ class AiSendAppBar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(64);
 
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final showDrawerIcon = width < 900;
+    final useShortLabels = width >= 900 && width < 1200;
+
+    return Container(
       height: 64,
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
@@ -21,57 +26,66 @@ class AiSendAppBar extends StatelessWidget implements PreferredSizeWidget {
           bottom: BorderSide(color: context.theme.dividerColor, width: 1),
         ),
       ),
-      padding: AppDimensions.paddingHorizontalExtraLarge(context),
+      padding: AppDimensions.paddingHorizontalLarge(context),
       child: Row(
         children: <Widget>[
+          if (showDrawerIcon)
+            IconButton(
+              icon: const Icon(Icons.menu_rounded),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+              color: context.colorScheme.onSurface,
+            ),
           const _AiSendLogo(),
           const Spacer(),
-          _NavButton(
-            label: context.isMobile ? 'Resultados' : 'Central de Resultados',
-            icon: Icons.bar_chart_rounded,
-            isActive: currentRoute == '/',
-            onTap: () {
-              if (currentRoute != '/') {
-                Navigator.pushReplacementNamed(context, '/');
-              }
-            },
-          ),
-          const AppSpacerHorizontal.regular(),
-          _NavButton(
-            label: context.isMobile ? 'Disparos' : 'Máquina de disparos',
-            icon: Icons.send_rounded,
-            isActive: currentRoute == '/broadcast',
-            onTap: () {
-              if (currentRoute != '/broadcast') {
-                Navigator.pushReplacementNamed(context, '/broadcast');
-              }
-            },
-          ),
-          const AppSpacerHorizontal.regular(),
-          _NavButton(
-            label: context.isMobile ? 'Agenda' : 'Agendamentos',
-            icon: Icons.schedule_rounded,
-            isActive: currentRoute == '/schedule',
-            onTap: () {
-              if (currentRoute != '/schedule') {
-                Navigator.pushReplacementNamed(context, '/schedule');
-              }
-            },
-          ),
-          const AppSpacerHorizontal.regular(),
-          _NavButton(
-            label: 'Follow-up',
-            icon: Icons.tune_rounded,
-            isActive: currentRoute == '/follow_up',
-            onTap: () {
-              if (currentRoute != '/follow_up') {
-                Navigator.pushReplacementNamed(context, '/follow_up');
-              }
-            },
-          ),
+          if (!showDrawerIcon) ...[
+            _NavButton(
+              label: useShortLabels ? 'Resultados' : 'Central de Resultados',
+              icon: Icons.bar_chart_rounded,
+              isActive: currentRoute == '/',
+              onTap: () {
+                if (currentRoute != '/') {
+                  Navigator.pushReplacementNamed(context, '/');
+                }
+              },
+            ),
+            const AppSpacerHorizontal.regular(),
+            _NavButton(
+              label: useShortLabels ? 'Disparos' : 'Máquina de disparos',
+              icon: Icons.send_rounded,
+              isActive: currentRoute == '/broadcast',
+              onTap: () {
+                if (currentRoute != '/broadcast') {
+                  Navigator.pushReplacementNamed(context, '/broadcast');
+                }
+              },
+            ),
+            const AppSpacerHorizontal.regular(),
+            _NavButton(
+              label: useShortLabels ? 'Agenda' : 'Agendamentos',
+              icon: Icons.schedule_rounded,
+              isActive: currentRoute == '/schedule',
+              onTap: () {
+                if (currentRoute != '/schedule') {
+                  Navigator.pushReplacementNamed(context, '/schedule');
+                }
+              },
+            ),
+            const AppSpacerHorizontal.regular(),
+            _NavButton(
+              label: 'Follow-up',
+              icon: Icons.tune_rounded,
+              isActive: currentRoute == '/follow_up',
+              onTap: () {
+                if (currentRoute != '/follow_up') {
+                  Navigator.pushReplacementNamed(context, '/follow_up');
+                }
+              },
+            ),
+          ],
         ],
       ),
     );
+  }
 }
 
 class _AiSendLogo extends StatelessWidget {

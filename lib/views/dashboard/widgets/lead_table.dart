@@ -236,50 +236,64 @@ class _MobileLeadCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final phone = AppFormatters.formatPhone(lead.phone);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppDimensions.kRegular),
-      padding: AppDimensions.paddingLarge(context),
-      decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainer,
-        borderRadius: AppDimensions.radiusExtraLarge,
-        border: Border.all(color: context.colorScheme.outline, width: 1),
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => LeadDetailView(lead: lead),
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      lead.name,
-                      style: context.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: context.colorScheme.onSurface,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: AppDimensions.kRegular),
+        padding: AppDimensions.paddingLarge(context),
+        decoration: BoxDecoration(
+          color: context.colorScheme.surfaceContainer,
+          borderRadius: AppDimensions.radiusExtraLarge,
+          border: Border.all(color: context.colorScheme.outline, width: 1),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        lead.name,
+                        style: context.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: context.colorScheme.onSurface,
+                        ),
                       ),
-                    ),
-                    const AppSpacerVertical.tiny(),
-                    Text(phone, style: context.textTheme.bodySmall),
-                  ],
+                      const AppSpacerVertical.tiny(),
+                      Text(phone, style: context.textTheme.bodySmall),
+                    ],
+                  ),
                 ),
-              ),
-              StatusBadge(status: lead.status),
-            ],
-          ),
-          const AppSpacerVertical.medium(),
-          Text(
-            lead.lastMessage,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: context.textTheme.bodySmall?.copyWith(
-              color: context.colorScheme.onSurfaceVariant,
+                StatusBadge(status: lead.status),
+                const AppSpacerHorizontal.regular(),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                ),
+              ],
             ),
-          ),
-          const AppSpacerVertical.regular(),
-          Text(lead.time, style: context.textTheme.labelSmall),
-        ],
+            const AppSpacerVertical.medium(),
+            Text(
+              lead.lastMessage,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: context.textTheme.bodySmall?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const AppSpacerVertical.regular(),
+            Text(lead.time, style: context.textTheme.labelSmall),
+          ],
+        ),
       ),
     );
   }
