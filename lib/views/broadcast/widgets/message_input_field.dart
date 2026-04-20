@@ -26,37 +26,37 @@ class _FixedMessageField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          'Mensagem',
-          style: context.textTheme.titleLarge?.copyWith(
-            color: context.colorScheme.onSurfaceVariant,
-          ),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: <Widget>[
+      Text(
+        'Mensagem',
+        style: context.textTheme.titleLarge?.copyWith(
+          color: context.colorScheme.onSurfaceVariant,
         ),
-        const AppSpacerVertical.regular(),
-        TextField(
-          maxLines: 6,
-          style: context.textTheme.bodyMedium?.copyWith(
-            color: context.colorScheme.onSurface,
-          ),
-          decoration: const InputDecoration(
-            hintText:
-                'Digite a mensagem exata que será enviada para todos os contatos.',
-            alignLabelWithHint: true,
-          ),
-          onChanged: onChanged,
+      ),
+      const AppSpacerVertical.regular(),
+      TextField(
+        maxLines: 6,
+        style: context.textTheme.bodyMedium?.copyWith(
+          color: context.colorScheme.onSurface,
         ),
-        const AppSpacerVertical.tiny(),
-        Text(
-          'A mesma mensagem será enviada para todos, sem variações.',
-          style: context.textTheme.bodySmall?.copyWith(
-            fontStyle: FontStyle.italic,
-            fontSize: 11,
-          ),
+        decoration: const InputDecoration(
+          hintText:
+              'Digite a mensagem exata que será enviada para todos os contatos.',
+          alignLabelWithHint: true,
         ),
-      ],
-    );
+        onChanged: onChanged,
+      ),
+      const AppSpacerVertical.tiny(),
+      Text(
+        'A mesma mensagem será enviada para todos, sem variações.',
+        style: context.textTheme.bodySmall?.copyWith(
+          fontStyle: FontStyle.italic,
+          fontSize: 11,
+        ),
+      ),
+    ],
+  );
 }
 
 class _AiReasonField extends StatelessWidget {
@@ -66,35 +66,35 @@ class _AiReasonField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          'Motivo do Contato',
-          style: context.textTheme.titleLarge?.copyWith(
-            color: context.colorScheme.onSurfaceVariant,
-          ),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: <Widget>[
+      Text(
+        'Motivo do Contato',
+        style: context.textTheme.titleLarge?.copyWith(
+          color: context.colorScheme.onSurfaceVariant,
         ),
-        const AppSpacerVertical.regular(),
-        TextField(
-          maxLines: 4,
-          style: context.textTheme.bodyMedium?.copyWith(
-            color: context.colorScheme.onSurface,
-          ),
-          decoration: const InputDecoration(
-            hintText:
-                'Descreva o objetivo do contato. Ex: Avisar sobre o novo lote de Tirzepatida disponível para entrega imediata.',
-            alignLabelWithHint: true,
-          ),
-          onChanged: onChanged,
+      ),
+      const AppSpacerVertical.regular(),
+      TextField(
+        maxLines: 4,
+        style: context.textTheme.bodyMedium?.copyWith(
+          color: context.colorScheme.onSurface,
         ),
-        const AppSpacerVertical.tiny(),
-        Text(
-          'A IA gerará variações naturais com base neste contexto.',
-          style: context.textTheme.bodySmall?.copyWith(
-            fontStyle: FontStyle.italic,
-            fontSize: 11,
-          ),
+        decoration: const InputDecoration(
+          hintText:
+              'Descreva o objetivo do contato. Ex: Avisar sobre o novo lote de Tirzepatida disponível para entrega imediata.',
+          alignLabelWithHint: true,
         ),
-      ],
-    );
+        onChanged: onChanged,
+      ),
+      const AppSpacerVertical.small(),
+      Text(
+        'A IA gerará variações naturais com base neste contexto.',
+        style: context.textTheme.bodySmall?.copyWith(
+          fontStyle: FontStyle.italic,
+          fontSize: 11,
+        ),
+      ),
+    ],
+  );
 }
