@@ -15,7 +15,9 @@ class SendModeSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Row(
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
           children: <Widget>[
             ModeChip(
               label: 'Imediato',
@@ -23,14 +25,12 @@ class SendModeSection extends StatelessWidget {
               selected: vm.sendMode == SendMode.immediate,
               onTap: () => vm.setSendMode(SendMode.immediate),
             ),
-            const AppSpacerHorizontal.regular(),
             ModeChip(
               label: 'Agendar',
               icon: Icons.schedule_rounded,
               selected: vm.sendMode == SendMode.scheduled,
               onTap: () => vm.setSendMode(SendMode.scheduled),
             ),
-            const AppSpacerHorizontal.regular(),
             ModeChip(
               label: 'Recorrente',
               icon: Icons.repeat_rounded,
