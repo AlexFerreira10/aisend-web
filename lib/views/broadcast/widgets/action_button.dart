@@ -72,6 +72,31 @@ class ActionButton extends StatelessWidget {
                 })
             : () => _showValidationToast(context, vm));
 
+    if (!context.isDesktop) {
+      return Column(
+        children: <Widget>[
+          _BroadcastButton(
+            enabled: !vm.isPreviewing,
+            icon: vm.isPreviewing
+                ? Icons.hourglass_empty_rounded
+                : Icons.visibility_rounded,
+            label: vm.isPreviewing ? 'Gerando...' : 'Pré-visualizar',
+            onTap: vm.isPreviewing
+                ? null
+                : (vm.canPreview ? vm.previewBlast : () => _showValidationToast(context, vm)),
+            useGradient: false,
+          ),
+          const AppSpacerVertical.regular(),
+          _BroadcastButton(
+            enabled: canSend,
+            icon: sendIcon,
+            label: sendLabel,
+            onTap: sendAction,
+          ),
+        ],
+      );
+    }
+
     return Row(
       children: <Widget>[
         Expanded(

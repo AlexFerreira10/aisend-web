@@ -72,81 +72,87 @@ class _DropZoneState extends State<_DropZone> {
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: double.infinity,
-          padding: AppDimensions.paddingVerticalHuge(context).add(AppDimensions.paddingHorizontalLarge(context)),
-          decoration: BoxDecoration(
-            color: active ? context.colorScheme.primary.withValues(alpha: 0.1) : context.colorScheme.surface,
-            borderRadius: AppDimensions.radiusExtraLarge,
-            border: Border.all(
-              color: active ? context.colorScheme.primary : context.colorScheme.outline,
-              width: active ? 2 : 1.5,
-              strokeAlign: BorderSide.strokeAlignInside,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.onTap,
+          borderRadius: AppDimensions.radiusExtraLarge,
+          splashColor: context.colorScheme.primary.withValues(alpha: 0.1),
+          highlightColor: context.colorScheme.primary.withValues(alpha: 0.05),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: double.infinity,
+            padding: AppDimensions.paddingVerticalHuge(context).add(AppDimensions.paddingHorizontalLarge(context)),
+            decoration: BoxDecoration(
+              color: active ? context.colorScheme.primary.withValues(alpha: 0.1) : context.colorScheme.surface,
+              borderRadius: AppDimensions.radiusExtraLarge,
+              border: Border.all(
+                color: active ? context.colorScheme.primary : context.colorScheme.outline,
+                width: active ? 2 : 1.5,
+                strokeAlign: BorderSide.strokeAlignInside,
+              ),
             ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: AppDimensions.paddingMediumLarge(context),
-                decoration: BoxDecoration(
-                  color: active
-                      ? context.colorScheme.primary.withValues(alpha: 0.2)
-                      : context.colorScheme.surfaceContainer,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.upload_rounded,
-                  size: AppDimensions.iconLarge(context),
-                  color: active
-                      ? context.colorScheme.primary
-                      : context.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const AppSpacerVertical.large(),
-              Text(
-                'Arraste lista de contatos',
-                style: context.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: active
-                      ? context.colorScheme.primary
-                      : context.colorScheme.onSurface,
-                ),
-              ),
-              const AppSpacerVertical.tiny(),
-              Text(
-                'CSV, Excel ou JSON',
-                style: context.textTheme.bodySmall?.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
-                  fontSize: 11,
-                ),
-              ),
-              const AppSpacerVertical.tiny(),
-              Text(
-                'ou',
-                style: context.textTheme.bodySmall,
-              ),
-              const AppSpacerVertical.medium(),
-              Container(
-                padding: AppDimensions.paddingHorizontalExtraLarge(context).add(AppDimensions.paddingVerticalRegular(context)),
-                decoration: BoxDecoration(
-                  border: Border.all(color: context.colorScheme.outline, width: 1.5),
-                  borderRadius: AppDimensions.radiusMedium,
-                  color: context.colorScheme.surfaceContainer,
-                ),
-                child: Text(
-                  'Escolher Arquivo',
-                  style: context.textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: context.colorScheme.onSurface,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: AppDimensions.paddingMediumLarge(context),
+                  decoration: BoxDecoration(
+                    color: active
+                        ? context.colorScheme.primary.withValues(alpha: 0.2)
+                        : context.colorScheme.surfaceContainer,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.upload_rounded,
+                    size: AppDimensions.iconLarge(context),
+                    color: active
+                        ? context.colorScheme.primary
+                        : context.colorScheme.onSurfaceVariant,
                   ),
                 ),
-              ),
-            ],
+                const AppSpacerVertical.large(),
+                Text(
+                  'Arraste lista de contatos',
+                  style: context.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: active
+                        ? context.colorScheme.primary
+                        : context.colorScheme.onSurface,
+                  ),
+                ),
+                const AppSpacerVertical.tiny(),
+                Text(
+                  'CSV, Excel ou JSON',
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                    fontSize: 11,
+                  ),
+                ),
+                const AppSpacerVertical.tiny(),
+                Text(
+                  'ou',
+                  style: context.textTheme.bodySmall,
+                ),
+                const AppSpacerVertical.medium(),
+                Container(
+                  padding: AppDimensions.paddingHorizontalExtraLarge(context).add(AppDimensions.paddingVerticalRegular(context)),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: context.colorScheme.outline, width: 1.5),
+                    borderRadius: AppDimensions.radiusMedium,
+                    color: context.colorScheme.surfaceContainer,
+                  ),
+                  child: Text(
+                    'Escolher Arquivo',
+                    style: context.textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: context.colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
