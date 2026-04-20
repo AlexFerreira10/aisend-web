@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 
 /// AiSend Brand Colors
 abstract final class AppColors {
-  // ─── Primary ───────────────────────────────────────────────────────────────
-  static const Color primary = Color(0xFF7C3AED);
-  static const Color primaryLight = Color(0xFFA855F7);
-  static const Color primaryDark = Color(0xFF5B21B6);
-  static const Color primaryGlow = Color(0x337C3AED);
+  // ─── Primary (Tons de Ametista / Menos Neon) ───────────────────────────────
+  static const Color primary = Color(0xFF6B4FA3);
+  static const Color primaryLight = Color(0xFF8A73BA);
+  static const Color primaryDark = Color(0xFF483273);
+  static const Color primaryGlow = Color(0x336B4FA3);
 
   // ─── Accent ────────────────────────────────────────────────────────────────
   static const Color accent = Color(0xFF06B6D4);
@@ -20,7 +20,9 @@ abstract final class AppColors {
 
   // ─── Border ────────────────────────────────────────────────────────────────
   static const Color border = Color(0x12FFFFFF);
-  static const Color borderFocus = Color(0x40A855F7);
+  static const Color borderFocus = Color(
+    0x408A73BA,
+  ); // Ajustado para combinar com primaryLight
 
   // ─── Text ──────────────────────────────────────────────────────────────────
   static const Color textPrimary = Color(0xFFF1F5F9);
