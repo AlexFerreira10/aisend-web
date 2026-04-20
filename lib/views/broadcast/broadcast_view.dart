@@ -5,6 +5,7 @@ import 'package:aisend/view_models/broadcast_view_model.dart';
 import 'package:aisend/widgets/aisend_app_bar.dart';
 import 'package:aisend/widgets/aisend_drawer.dart';
 import 'package:aisend/widgets/section_card.dart';
+import 'package:aisend/core/utils/app_toast.dart'; // Added
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'widgets/upload_zone.dart';
@@ -124,7 +125,9 @@ class _DataEntrySection extends StatelessWidget {
         UploadZone(
           uploadedFileName: vm.uploadedFileName,
           leadCount: vm.dynamicLeadsCount > 0 ? vm.dynamicLeadsCount : null,
-          onUpload: vm.pickAndParseFile,
+          onUpload: () => vm.pickAndParseFile(
+            onError: (err) => AppToast.show(context, err),
+          ),
           onClear: vm.clearUpload,
         ),
         if (vm.parseWarnings != null) ...[

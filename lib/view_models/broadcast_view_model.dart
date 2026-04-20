@@ -102,7 +102,7 @@ class BroadcastViewModel extends ChangeNotifier {
   String? _parseWarnings;
   String? get parseWarnings => _parseWarnings;
 
-  Future<void> pickAndParseFile() async {
+  Future<void> pickAndParseFile({void Function(String error)? onError}) async {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -119,7 +119,7 @@ class BroadcastViewModel extends ChangeNotifier {
       _parseWarnings = null;
 
       if (ext == 'json') {
-        // Client-side JSON parse (existing behaviour)
+        // Client-side JSON parse
         final content = utf8.decode(bytes);
         final dynamic data = jsonDecode(content);
         if (data is List) {
@@ -138,6 +138,8 @@ class BroadcastViewModel extends ChangeNotifier {
           _uploadedFileName = file.name;
           _leadsFromBase = false;
           notifyListeners();
+        } else {
+          onError?.call('O arquivo JSON deve ser uma lista de contatos.');
         }
       } else {
         // CSV / XLSX → backend parse
@@ -158,6 +160,10 @@ class BroadcastViewModel extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('[BroadcastVM] Error importing file: $e');
+      final msg = e.toString().contains('401') 
+          ? 'Não autorizado. Verifique sua chave de API.'
+          : 'Erro ao carregar arquivo. Verifique o formato.';
+      onError?.call(msg);
     }
   }
 

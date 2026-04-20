@@ -51,6 +51,11 @@ class BroadcastService {
     final response = await _dio.post(
       AppConfig.parseContactsEndpoint,
       data: formData,
+      options: Options(
+        headers: {
+          'X-Api-Key': AppConfig.apiKey,
+        },
+      ),
     );
     final data = response.data as Map<String, dynamic>;
     // ApiResponse envelope — unwrap manually since we use Dio directly
