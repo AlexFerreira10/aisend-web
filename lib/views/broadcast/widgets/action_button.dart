@@ -48,29 +48,37 @@ class ActionButton extends StatelessWidget {
             : Icons.repeat_rounded,
         label: vm.isCreatingRule ? 'Criando...' : 'Criar Regra',
         onTap: vm.canCreateRule
-            ? () => vm.createFollowUpRule(() => AppToast.show(context,
-                'Regra de follow-up criada com sucesso!'))
+            ? () => vm.createFollowUpRule(
+                () => AppToast.show(
+                  context,
+                  'Regra de follow-up criada com sucesso!',
+                ),
+              )
             : () => _showValidationToast(context, vm),
       );
     }
 
     // Dois botões: Pré-visualizar (opcional) + Enviar agora (principal)
-    final sendLabel = vm.sendMode == SendMode.scheduled ? 'Agendar Disparo' : 'Enviar agora';
-    final sendIcon = vm.sendMode == SendMode.scheduled ? Icons.schedule_rounded : Icons.send_rounded;
+    final sendLabel = vm.sendMode == SendMode.scheduled
+        ? 'Agendar Disparo'
+        : 'Enviar agora';
+    final sendIcon = vm.sendMode == SendMode.scheduled
+        ? Icons.schedule_rounded
+        : Icons.send_rounded;
     final canSend = vm.sendMode == SendMode.scheduled
         ? (vm.canSchedule && !vm.isScheduling)
         : vm.canBroadcast;
     final sendAction = vm.sendMode == SendMode.scheduled
         ? (canSend ? vm.scheduleBlast : null)
         : (canSend
-            ? () => vm.startBroadcast(() {
+              ? () => vm.startBroadcast(() {
                   final total = vm.sentCount + vm.errorCount;
                   final msg = vm.errorCount == 0
                       ? 'Todas as $total solicitações foram feitas com sucesso!'
                       : 'Foram feitas ${vm.sentCount} de $total solicitações. ${vm.errorCount} com erro.';
                   AppToast.show(context, msg);
                 })
-            : () => _showValidationToast(context, vm));
+              : () => _showValidationToast(context, vm));
 
     if (!context.isDesktop) {
       return Column(
@@ -83,7 +91,9 @@ class ActionButton extends StatelessWidget {
             label: vm.isPreviewing ? 'Gerando...' : 'Pré-visualizar',
             onTap: vm.isPreviewing
                 ? null
-                : (vm.canPreview ? vm.previewBlast : () => _showValidationToast(context, vm)),
+                : (vm.canPreview
+                      ? vm.previewBlast
+                      : () => _showValidationToast(context, vm)),
             useGradient: false,
           ),
           const AppSpacerVertical.regular(),
@@ -109,7 +119,9 @@ class ActionButton extends StatelessWidget {
             label: vm.isPreviewing ? 'Gerando...' : 'Pré-visualizar',
             onTap: vm.isPreviewing
                 ? null
-                : (vm.canPreview ? vm.previewBlast : () => _showValidationToast(context, vm)),
+                : (vm.canPreview
+                      ? vm.previewBlast
+                      : () => _showValidationToast(context, vm)),
             useGradient: false,
           ),
         ),
@@ -130,7 +142,7 @@ class ActionButton extends StatelessWidget {
   void _showValidationToast(BuildContext context, BroadcastViewModel vm) {
     final String msg;
     if (vm.selectedInstance == null) {
-      msg = 'Selecione uma instância.';
+      msg = 'Selecione um consultor.';
     } else if (vm.messageMode == MessageMode.fixed &&
         vm.fixedMessage.trim().isEmpty) {
       msg = 'Digite a mensagem fixa para pré-visualizar.';
@@ -192,7 +204,9 @@ class _BroadcastButtonState extends State<_BroadcastButton> {
           padding: AppDimensions.paddingVerticalLarge(context),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            gradient: withGradient ? context.customColors.primaryGradient : null,
+            gradient: withGradient
+                ? context.customColors.primaryGradient
+                : null,
             color: withGradient ? null : context.colorScheme.surface,
             borderRadius: AppDimensions.radiusExtraLarge,
             border: withGradient
@@ -243,8 +257,8 @@ class _BroadcastButtonContent extends StatelessWidget {
     final color = withGradient
         ? Colors.white
         : enabled
-            ? context.colorScheme.primary
-            : context.colorScheme.onSurfaceVariant;
+        ? context.colorScheme.primary
+        : context.colorScheme.onSurfaceVariant;
 
     return Row(
       mainAxisSize: MainAxisSize.min,

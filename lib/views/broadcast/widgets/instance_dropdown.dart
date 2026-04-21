@@ -26,7 +26,7 @@ class InstanceDropdown extends StatelessWidget {
         child: DropdownButton<InstanceModel>(
           value: vm.selectedInstance,
           hint: Text(
-            'Selecione uma instância...',
+            'Selecione um consultor...',
             style: context.textTheme.bodyMedium?.copyWith(
               color: context.colorScheme.onSurfaceVariant,
             ),

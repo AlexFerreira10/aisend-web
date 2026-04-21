@@ -13,8 +13,8 @@ class DashboardViewModel extends ChangeNotifier {
   DashboardViewModel({
     required LeadsService leadsService,
     required ConsultantsService consultantsService,
-  })  : _leadsService = leadsService,
-        _consultantsService = consultantsService {
+  }) : _leadsService = leadsService,
+       _consultantsService = consultantsService {
     _loadInstances();
     loadData();
   }
@@ -27,7 +27,7 @@ class DashboardViewModel extends ChangeNotifier {
   String get selectedPeriod => _selectedPeriod;
 
   List<({String? id, String label})> _instanceFilters = [
-    (id: null, label: 'Todas as Instâncias'),
+    (id: null, label: 'Todos os consultores'),
   ];
   List<({String? id, String label})> get instanceFilters => _instanceFilters;
   List<String> get periodFilters => ['7', '15', '30'];
@@ -105,9 +105,10 @@ class DashboardViewModel extends ChangeNotifier {
       _responseRate = allLeads.isEmpty
           ? 0.0
           : allLeads.where((l) => l.lastInteractionAt != null).length /
-              allLeads.length;
-      _hotLeadsCount =
-          allLeads.where((l) => l.aiClassification == LeadStatusEnum.hot).length;
+                allLeads.length;
+      _hotLeadsCount = allLeads
+          .where((l) => l.aiClassification == LeadStatusEnum.hot)
+          .length;
 
       await _loadActivity();
     } on ApiException catch (e) {
@@ -126,8 +127,7 @@ class DashboardViewModel extends ChangeNotifier {
 
   // ─── Activity Actions ─────────────────────────────────────────────────────────
 
-  void setActivityClassification(String? classification,
-      {bool? waitingHuman}) {
+  void setActivityClassification(String? classification, {bool? waitingHuman}) {
     _activityClassification = classification;
     _activityWaitingHuman = waitingHuman;
     _activityPage = 1;
@@ -173,12 +173,12 @@ class DashboardViewModel extends ChangeNotifier {
     try {
       final instances = await _consultantsService.fetchInstances();
       _instanceFilters = [
-        (id: null, label: 'Todas as Instâncias'),
+        (id: null, label: 'Todos os consultores'),
         ...instances.map((i) => (id: i.id as String?, label: i.label)),
       ];
       notifyListeners();
     } catch (_) {
-      // Silently fail — filter stays as "Todas as Instâncias"
+      // Silently fail — filter stays as "Todos os consultores"
     }
   }
 
