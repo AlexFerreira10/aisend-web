@@ -9,6 +9,8 @@ class LeadModel {
   final FunnelStatusEnum funnelStatus;
   final LeadStatusEnum aiClassification;
   final bool waitingHuman;
+  final String? specialty;
+  final String? registration;
   final String lastMessage;
   final DateTime? lastInteractionAt;
   final DateTime createdAt;
@@ -17,6 +19,8 @@ class LeadModel {
     required this.id,
     required this.name,
     required this.phone,
+    this.specialty,
+    this.registration,
     this.consultantId,
     this.funnelStatus = FunnelStatusEnum.cold,
     this.aiClassification = LeadStatusEnum.cold,
@@ -41,6 +45,8 @@ class LeadModel {
         id: json['id'] as String,
         name: json['name'] as String? ?? 'Sem nome',
         phone: json['phone'] as String,
+        specialty: json['specialty'] as String?,
+        registration: json['registration'] as String?,
         consultantId: json['consultantId'] as String?,
         funnelStatus: FunnelStatusEnumExtension.fromString(json['funnelStatus'] as String?),
         aiClassification: LeadStatusEnumExtension.fromString(json['aiClassification'] as String?),
@@ -58,6 +64,8 @@ class LeadModel {
     String? id,
     String? name,
     String? phone,
+    String? specialty,
+    String? registration,
     String? consultantId,
     FunnelStatusEnum? funnelStatus,
     LeadStatusEnum? aiClassification,
@@ -70,6 +78,8 @@ class LeadModel {
         id: id ?? this.id,
         name: name ?? this.name,
         phone: phone ?? this.phone,
+        specialty: specialty ?? this.specialty,
+        registration: registration ?? this.registration,
         consultantId: consultantId ?? this.consultantId,
         funnelStatus: funnelStatus ?? this.funnelStatus,
         aiClassification: aiClassification ?? this.aiClassification,

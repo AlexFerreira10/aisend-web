@@ -28,8 +28,6 @@ abstract final class AppConfig {
   static String scheduledCancelEndpoint(String id) =>
       '$baseUrl/api/outbound/scheduled/$id';
 
-  static String captureUrl(String instance) =>
-      '$baseUrl/api/capture/$instance';
 
   static String messagesEndpoint(String phone) =>
       '$baseUrl/api/leads/$phone/messages';
