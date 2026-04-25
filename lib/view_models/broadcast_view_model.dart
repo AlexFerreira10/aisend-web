@@ -237,7 +237,7 @@ class BroadcastViewModel extends ChangeNotifier {
     try {
       final sampleName = _dynamicLeads.isNotEmpty ? _dynamicLeads.first.name : 'João';
       final body = <String, dynamic>{
-        'instancia': _selectedInstance!.id,
+        'instancia': _selectedInstance!.consultantId ?? _selectedInstance!.id,
         'motivo': _contactReason,
         'sampleName': sampleName,
         if (_messageMode == MessageMode.fixed) 'fixedMessage': _fixedMessage.trim(),
@@ -323,7 +323,7 @@ class BroadcastViewModel extends ChangeNotifier {
         notifyListeners();
 
         final payload = <String, dynamic>{
-          'instancia': _selectedInstance!.id,
+          'instancia': _selectedInstance!.consultantId ?? _selectedInstance!.id,
           'motivo': _contactReason,
           'contacts': batch,
           if (_messageMode == MessageMode.fixed)
@@ -393,7 +393,7 @@ class BroadcastViewModel extends ChangeNotifier {
           .map((l) => {'phone': l.phone, 'name': l.name})
           .toList();
       await _scheduleService.createSchedule({
-        'instancia': _selectedInstance!.id,
+        'instancia': _selectedInstance!.consultantId ?? _selectedInstance!.id,
         'motivo': _contactReason,
         'scheduledAt': _scheduledAt!.toUtc().toIso8601String(),
         'contacts': contacts,
