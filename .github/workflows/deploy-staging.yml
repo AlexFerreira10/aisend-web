@@ -31,8 +31,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            mkdir -p ~/aisend-api-staging/wwwroot
+          script: mkdir -p ~/aisend-api-staging/wwwroot
 
       - name: Copy files to EC2 Staging
         uses: appleboy/scp-action@v0.1.7
@@ -43,3 +42,11 @@ jobs:
           source: "build/web/*"
           target: "~/aisend-api-staging/wwwroot"
           strip_components: 2
+
+      - name: Restart staging backend to serve new frontend
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: sudo systemctl restart aisend-api-staging

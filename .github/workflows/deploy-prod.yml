@@ -31,8 +31,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            mkdir -p ~/aisend-api/wwwroot
+          script: mkdir -p ~/aisend-api/wwwroot
 
       - name: Copy files to EC2
         uses: appleboy/scp-action@v0.1.7
@@ -43,3 +42,11 @@ jobs:
           source: "build/web/*"
           target: "~/aisend-api/wwwroot"
           strip_components: 2
+
+      - name: Restart backend to serve new frontend
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: sudo systemctl restart aisend-api
