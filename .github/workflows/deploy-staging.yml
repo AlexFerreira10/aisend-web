@@ -25,15 +25,14 @@ jobs:
             --dart-define=BASE_URL=${{ secrets.API_URL_STAGING }} \
             --dart-define=API_KEY=${{ secrets.API_KEY_STAGING }}
 
-      - name: Prepare EC2 directory
+      - name: Prepare wwwroot directory
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            sudo mkdir -p /var/www/aisend-staging
-            sudo chown -R ubuntu:ubuntu /var/www/aisend-staging
+            mkdir -p ~/aisend-api-staging/wwwroot
 
       - name: Copy files to EC2 Staging
         uses: appleboy/scp-action@v0.1.7
@@ -42,5 +41,5 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "build/web/*"
-          target: "/var/www/aisend-staging"
+          target: "~/aisend-api-staging/wwwroot"
           strip_components: 2

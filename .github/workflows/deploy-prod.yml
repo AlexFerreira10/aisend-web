@@ -22,18 +22,17 @@ jobs:
       - name: Build Web Production
         run: |
           flutter build web --release \
-            --dart-define=BASE_URL=http://15.228.53.86:5113 \
+            --dart-define=BASE_URL=http://56.125.23.170:5113 \
             --dart-define=API_KEY=${{ secrets.API_KEY_PROD }}
 
-      - name: Prepare EC2 directory
+      - name: Prepare wwwroot directory
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            sudo mkdir -p /var/www/aisend-prod
-            sudo chown -R ubuntu:ubuntu /var/www/aisend-prod
+            mkdir -p ~/aisend-api/wwwroot
 
       - name: Copy files to EC2
         uses: appleboy/scp-action@v0.1.7
@@ -42,5 +41,5 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "build/web/*"
-          target: "/var/www/aisend-prod"
+          target: "~/aisend-api/wwwroot"
           strip_components: 2
