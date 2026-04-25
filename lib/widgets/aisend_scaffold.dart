@@ -16,37 +16,21 @@ class AiSendScaffold extends StatelessWidget {
     this.floatingActionButton,
   });
 
-  static const _routeTitles = {
-    '/': 'Central de Resultados',
-    '/broadcast': 'Máquina de Disparos',
-    '/schedule': 'Agendamentos',
-    '/follow_up': 'Follow-up',
-    '/leads': 'Gestão de Leads',
-  };
-
   @override
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.sizeOf(context).width >= 900;
 
     if (isDesktop) {
-      return Scaffold(
-        body: MediaQuery.removePadding(
-          context: context,
-          removeTop: true,
-          child: Row(
-            children: <Widget>[
-              SideNav(currentRoute: currentRoute),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    _ContentHeader(title: _routeTitles[currentRoute] ?? ''),
-                    Expanded(child: body),
-                  ],
-                ),
-              ),
-            ],
-          ),
+      return Container(
+        color: context.colorScheme.surface,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            SideNav(currentRoute: currentRoute),
+            Expanded(
+              child: Material(color: Colors.transparent, child: body),
+            ),
+          ],
         ),
       );
     }
@@ -58,23 +42,4 @@ class AiSendScaffold extends StatelessWidget {
       body: body,
     );
   }
-}
-
-class _ContentHeader extends StatelessWidget {
-  final String title;
-  const _ContentHeader({required this.title});
-
-  @override
-  Widget build(BuildContext context) => Container(
-        height: 56,
-        padding: const EdgeInsets.symmetric(horizontal: 32),
-        decoration: BoxDecoration(
-          color: context.colorScheme.surface,
-          border: Border(
-            bottom: BorderSide(color: context.theme.dividerColor, width: 1),
-          ),
-        ),
-        alignment: Alignment.centerLeft,
-        child: Text(title, style: context.textTheme.headlineSmall),
-      );
 }

@@ -13,35 +13,56 @@ class FollowUpView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final vm = context.watch<FollowUpViewModel>();
-
     return AiSendScaffold(
       currentRoute: '/follow_up',
       body: SingleChildScrollView(
-        padding: AppDimensions.paddingExtraLarge(context),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            _PageHeader(vm: vm),
-            const AppSpacerVertical.extraLarge(),
-            if (vm.isLoading)
-              const Center(child: CircularProgressIndicator())
-            else if (vm.selectedInstance?.consultantId == null)
-              const _EmptyState(
-                icon: Icons.person_search_rounded,
-                message:
-                    'Selecione um consultor para gerenciar as regras de follow-up.',
-              )
-            else if (vm.hasError)
-              const _EmptyState(
-                icon: Icons.cloud_off_rounded,
-                message: 'Erro ao carregar regras. Tente novamente.',
-              )
-            else
-              _RulesList(vm: vm),
-          ],
-        ),
+        padding: context.isDesktop
+            ? const EdgeInsets.all(32)
+            : (AppDimensions.extraLarge(context).isFinite
+                  ? AppDimensions.paddingExtraLarge(context)
+                  : AppDimensions.paddingLarge(context)),
+        child: context.isDesktop
+            ? const _DesktopLayout()
+            : const _MainContent(),
       ),
+    );
+  }
+}
+
+class _DesktopLayout extends StatelessWidget {
+  const _DesktopLayout();
+
+  @override
+  Widget build(BuildContext context) => const _MainContent();
+}
+
+class _MainContent extends StatelessWidget {
+  const _MainContent();
+
+  @override
+  Widget build(BuildContext context) {
+    final vm = context.watch<FollowUpViewModel>();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _PageHeader(vm: vm),
+        const AppSpacerVertical.extraLarge(),
+        if (vm.isLoading)
+          const Center(child: CircularProgressIndicator())
+        else if (vm.selectedInstance?.consultantId == null)
+          const _EmptyState(
+            icon: Icons.person_search_rounded,
+            message:
+                'Selecione um consultor para gerenciar as regras de follow-up.',
+          )
+        else if (vm.hasError)
+          const _EmptyState(
+            icon: Icons.cloud_off_rounded,
+            message: 'Erro ao carregar regras. Tente novamente.',
+          )
+        else
+          _RulesList(vm: vm),
+      ],
     );
   }
 }

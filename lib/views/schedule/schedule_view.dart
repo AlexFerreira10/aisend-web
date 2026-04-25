@@ -34,8 +34,11 @@ class ScheduleView extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  Icon(Icons.cloud_off_rounded,
-                      size: 48, color: context.colorScheme.onSurfaceVariant),
+                  Icon(
+                    Icons.cloud_off_rounded,
+                    size: 48,
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
                   const AppSpacerVertical.large(),
                   Text(vm.error!, style: context.textTheme.bodyLarge),
                   const AppSpacerVertical.medium(),
@@ -53,37 +56,52 @@ class ScheduleView extends StatelessWidget {
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               child: Padding(
-                padding: AppDimensions.paddingExtraLarge(context),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      'Disparos Agendados',
-                      style: context.textTheme.displayMedium,
-                    ),
-                    const AppSpacerVertical.small(),
-                    Text(
-                      'Histórico e próximos disparos programados',
-                      style: context.textTheme.bodyMedium?.copyWith(
-                        color: context.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const AppSpacerVertical.extraLarge(),
-                    if (vm.consultantNames.isNotEmpty)
-                      _ConsultantFilter(vm: vm),
-                    if (vm.consultantNames.isNotEmpty)
-                      const AppSpacerVertical.large(),
-                    if (vm.items.isEmpty)
-                      _EmptyState()
-                    else
-                      _ScheduleList(items: vm.items),
-                  ],
-                ),
+                padding: context.isDesktop
+                    ? const EdgeInsets.all(32)
+                    : (AppDimensions.extraLarge(context).isFinite
+                          ? AppDimensions.paddingExtraLarge(context)
+                          : AppDimensions.paddingLarge(context)),
+                child: context.isDesktop
+                    ? const _DesktopLayout()
+                    : const _MainContent(),
               ),
             ),
           );
         },
       ),
+    );
+  }
+}
+
+class _DesktopLayout extends StatelessWidget {
+  const _DesktopLayout();
+
+  @override
+  Widget build(BuildContext context) => const _MainContent();
+}
+
+class _MainContent extends StatelessWidget {
+  const _MainContent();
+
+  @override
+  Widget build(BuildContext context) {
+    final vm = context.watch<ScheduleViewModel>();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text('Disparos Agendados', style: context.textTheme.displayMedium),
+        const AppSpacerVertical.small(),
+        Text(
+          'Histórico e próximos disparos programados',
+          style: context.textTheme.bodyMedium?.copyWith(
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const AppSpacerVertical.extraLarge(),
+        if (vm.consultantNames.isNotEmpty) _ConsultantFilter(vm: vm),
+        if (vm.consultantNames.isNotEmpty) const AppSpacerVertical.large(),
+        if (vm.items.isEmpty) _EmptyState() else _ScheduleList(items: vm.items),
+      ],
     );
   }
 }
@@ -114,23 +132,26 @@ class _ConsultantFilter extends StatelessWidget {
 class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(Icons.schedule_rounded,
-                size: 64, color: context.colorScheme.onSurfaceVariant),
-            const AppSpacerVertical.large(),
-            Text('Nenhum disparo agendado',
-                style: context.textTheme.titleLarge),
-            const AppSpacerVertical.small(),
-            Text(
-              'Agende um disparo na tela de Broadcast.',
-              style: context.textTheme.bodyMedium?.copyWith(
-                  color: context.colorScheme.onSurfaceVariant),
-            ),
-          ],
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Icon(
+          Icons.schedule_rounded,
+          size: 64,
+          color: context.colorScheme.onSurfaceVariant,
         ),
-      );
+        const AppSpacerVertical.large(),
+        Text('Nenhum disparo agendado', style: context.textTheme.titleLarge),
+        const AppSpacerVertical.small(),
+        Text(
+          'Agende um disparo na tela de Broadcast.',
+          style: context.textTheme.bodyMedium?.copyWith(
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _ScheduleList extends StatelessWidget {
@@ -139,13 +160,15 @@ class _ScheduleList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        children: items
-            .map((item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _ScheduleCard(item: item),
-                ))
-            .toList(),
-      );
+    children: items
+        .map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _ScheduleCard(item: item),
+          ),
+        )
+        .toList(),
+  );
 }
 
 class _ScheduleCard extends StatelessWidget {
@@ -165,7 +188,7 @@ class _ScheduleCard extends StatelessWidget {
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children:<Widget> [
+        children: <Widget>[
           _StatusDot(status: item.status),
           const AppSpacerHorizontal.medium(),
           Expanded(
@@ -208,8 +231,11 @@ class _ScheduleCard extends StatelessWidget {
           if (item.status == BlastStatus.pending) ...[
             const AppSpacerHorizontal.medium(),
             IconButton(
-              icon: Icon(Icons.cancel_outlined,
-                  color: context.colorScheme.error, size: 20),
+              icon: Icon(
+                Icons.cancel_outlined,
+                color: context.colorScheme.error,
+                size: 20,
+              ),
               tooltip: 'Cancelar',
               onPressed: () async {
                 final confirm = await showDialog<bool>(
@@ -217,21 +243,28 @@ class _ScheduleCard extends StatelessWidget {
                   builder: (_) => AlertDialog(
                     title: const Text('Cancelar disparo'),
                     content: const Text(
-                        'Tem certeza que deseja cancelar este agendamento?'),
+                      'Tem certeza que deseja cancelar este agendamento?',
+                    ),
                     actions: [
                       TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Não')),
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Não'),
+                      ),
                       FilledButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text('Cancelar disparo')),
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Cancelar disparo'),
+                      ),
                     ],
                   ),
                 );
                 if (confirm == true) {
                   await vm.cancel(item.id);
                   if (vm.cancelError != null && context.mounted) {
-                    AppToast.show(context, vm.cancelError!, type: ToastType.error);
+                    AppToast.show(
+                      context,
+                      vm.cancelError!,
+                      type: ToastType.error,
+                    );
                   }
                 }
               },
@@ -249,14 +282,14 @@ class _StatusDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.only(top: 4),
-        width: 10,
-        height: 10,
-        decoration: BoxDecoration(
-          color: status.color(context),
-          shape: BoxShape.circle,
-        ),
-      );
+    margin: const EdgeInsets.only(top: 4),
+    width: 10,
+    height: 10,
+    decoration: BoxDecoration(
+      color: status.color(context),
+      shape: BoxShape.circle,
+    ),
+  );
 }
 
 class _StatusChip extends StatelessWidget {

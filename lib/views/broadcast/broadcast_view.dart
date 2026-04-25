@@ -26,9 +26,11 @@ class BroadcastView extends StatelessWidget {
     currentRoute: '/broadcast',
     body: SingleChildScrollView(
       child: Padding(
-        padding: AppDimensions.extraLarge(context).isFinite
-            ? AppDimensions.paddingExtraLarge(context)
-            : AppDimensions.paddingLarge(context),
+        padding: context.isDesktop
+            ? const EdgeInsets.all(32)
+            : (AppDimensions.extraLarge(context).isFinite
+                ? AppDimensions.paddingExtraLarge(context)
+                : AppDimensions.paddingLarge(context)),
         child: context.isDesktop
             ? const _DesktopLayout()
             : const _MobileLayout(),
@@ -74,6 +76,8 @@ class _MainContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
+        const _PageHeader(),
+        const AppSpacerVertical.extraLarge(),
         SectionCard(
           number: '1',
           title: 'Entrada de Dados',
@@ -109,6 +113,27 @@ class _MainContent extends StatelessWidget {
         ],
         const AppSpacerVertical.large(),
         const ActionButton(),
+      ],
+    );
+  }
+}
+
+class _PageHeader extends StatelessWidget {
+  const _PageHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text('Máquina de Disparos', style: context.textTheme.displayMedium),
+        const AppSpacerVertical.small(),
+        Text(
+          'Inicie novos disparos e alcance seus leads com IA',
+          style: context.textTheme.bodyMedium?.copyWith(
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+        ),
       ],
     );
   }

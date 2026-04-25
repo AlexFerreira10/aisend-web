@@ -59,9 +59,13 @@ class _LeadFormDialogState extends State<LeadFormDialog> {
     final dto = {
       'name': _name.text.trim(),
       'phone': _phone.text.trim(),
-      'specialty': _specialty.text.trim().isEmpty ? null : _specialty.text.trim(),
+      'specialty': _specialty.text.trim().isEmpty
+          ? null
+          : _specialty.text.trim(),
       'city': _city.text.trim().isEmpty ? null : _city.text.trim(),
-      'registration': _registration.text.trim().isEmpty ? null : _registration.text.trim(),
+      'registration': _registration.text.trim().isEmpty
+          ? null
+          : _registration.text.trim(),
       'consultantId': _selectedConsultantId,
       'funnelStatus': _funnelStatus.asString,
     };
@@ -102,8 +106,9 @@ class _LeadFormDialogState extends State<LeadFormDialog> {
                 _Field(
                   controller: _name,
                   label: 'Nome *',
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Nome obrigatório' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Nome obrigatório'
+                      : null,
                 ),
                 const AppSpacerVertical.medium(),
                 _Field(
@@ -112,7 +117,9 @@ class _LeadFormDialogState extends State<LeadFormDialog> {
                   hint: 'Ex: 11999990000',
                   keyboardType: TextInputType.phone,
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Telefone obrigatório';
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Telefone obrigatório';
+                    }
                     final digits = v.replaceAll(RegExp(r'\D'), '');
                     if (digits.length < 10) return 'Mínimo 10 dígitos';
                     return null;
@@ -149,8 +156,12 @@ class _LeadFormDialogState extends State<LeadFormDialog> {
           onPressed: _saving ? null : () => _save(vm),
           child: _saving
               ? const SizedBox(
-                  width: 16, height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 )
               : Text(_isEditing ? 'Salvar' : 'Criar Lead'),
         ),
@@ -176,16 +187,16 @@ class _Field extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        validator: validator,
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          border: const OutlineInputBorder(),
-          isDense: true,
-        ),
-      );
+    controller: controller,
+    keyboardType: keyboardType,
+    validator: validator,
+    decoration: InputDecoration(
+      labelText: label,
+      hintText: hint,
+      border: const OutlineInputBorder(),
+      isDense: true,
+    ),
+  );
 }
 
 class _ConsultantDropdown extends StatelessWidget {
@@ -203,14 +214,16 @@ class _ConsultantDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = [
       const DropdownMenuItem<String>(value: null, child: Text('Sem consultor')),
-      ...instances.map((i) => DropdownMenuItem<String>(
-            value: i.consultantId as String?,
-            child: Text(i.label as String),
-          )),
+      ...instances.map(
+        (i) => DropdownMenuItem<String>(
+          value: i.consultantId as String?,
+          child: Text(i.label as String),
+        ),
+      ),
     ];
 
     return DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       items: items,
       onChanged: onChanged,
       decoration: const InputDecoration(
@@ -229,8 +242,9 @@ class _FunnelStatusDropdown extends StatelessWidget {
   const _FunnelStatusDropdown({required this.value, required this.onChanged});
 
   @override
-  Widget build(BuildContext context) => DropdownButtonFormField<FunnelStatusEnum>(
-        value: value,
+  Widget build(BuildContext context) =>
+      DropdownButtonFormField<FunnelStatusEnum>(
+        initialValue: value,
         onChanged: onChanged,
         decoration: const InputDecoration(
           labelText: 'Status do Funil',
@@ -241,7 +255,10 @@ class _FunnelStatusDropdown extends StatelessWidget {
           DropdownMenuItem(value: FunnelStatusEnum.cold, child: Text('Frio')),
           DropdownMenuItem(value: FunnelStatusEnum.warm, child: Text('Morno')),
           DropdownMenuItem(value: FunnelStatusEnum.hot, child: Text('Quente')),
-          DropdownMenuItem(value: FunnelStatusEnum.activeClient, child: Text('Cliente Ativo')),
+          DropdownMenuItem(
+            value: FunnelStatusEnum.activeClient,
+            child: Text('Cliente Ativo'),
+          ),
         ],
       );
 }

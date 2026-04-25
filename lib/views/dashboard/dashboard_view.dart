@@ -56,21 +56,14 @@ class DashboardView extends StatelessWidget {
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               child: Padding(
-                padding: AppDimensions.extraLarge(context).isFinite
-                    ? AppDimensions.paddingExtraLarge(context)
-                    : AppDimensions.paddingLarge(context),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children:  <Widget>[
-                    _PageHeader(),
-                    const AppSpacerVertical.large(),
-                    _FilterRow(),
-                    const AppSpacerVertical.extraLarge(),
-                    _KpiSection(),
-                    const AppSpacerVertical.huge(),
-                    _ActivitySection(),
-                  ],
-                ),
+                padding: context.isDesktop
+                    ? const EdgeInsets.all(32)
+                    : (AppDimensions.extraLarge(context).isFinite
+                        ? AppDimensions.paddingExtraLarge(context)
+                        : AppDimensions.paddingLarge(context)),
+                child: context.isDesktop
+                    ? const _DesktopLayout()
+                    : const _MainContent(),
               ),
             ),
           );
@@ -79,17 +72,44 @@ class DashboardView extends StatelessWidget {
     );
 }
 
-class _PageHeader extends StatelessWidget {
+class _DesktopLayout extends StatelessWidget {
+  const _DesktopLayout();
+
+  @override
+  Widget build(BuildContext context) => const _MainContent();
+}
+
+class _MainContent extends StatelessWidget {
+  const _MainContent();
+
   @override
   Widget build(BuildContext context) {
-    final hasSidebar = MediaQuery.sizeOf(context).width >= 900;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: const <Widget>[
+        _PageHeader(),
+        AppSpacerVertical.large(),
+        _FilterRow(),
+        AppSpacerVertical.extraLarge(),
+        _KpiSection(),
+        AppSpacerVertical.huge(),
+        _ActivitySection(),
+      ],
+    );
+  }
+}
+
+
+
+class _PageHeader extends StatelessWidget {
+  const _PageHeader();
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        if (!hasSidebar) ...[
-          Text('Central de Resultados', style: context.textTheme.displayMedium),
-          const AppSpacerVertical.small(),
-        ],
+        Text('Central de Resultados', style: context.textTheme.displayMedium),
+        const AppSpacerVertical.small(),
         Text(
           'Visão geral da sua base de contatos',
           style: context.textTheme.bodyMedium?.copyWith(
@@ -102,6 +122,7 @@ class _PageHeader extends StatelessWidget {
 }
 
 class _FilterRow extends StatelessWidget {
+  const _FilterRow();
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<DashboardViewModel>();
@@ -183,6 +204,7 @@ class _StyledDropdown<T> extends StatelessWidget {
 }
 
 class _KpiSection extends StatelessWidget {
+  const _KpiSection();
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<DashboardViewModel>();
@@ -242,6 +264,7 @@ class _KpiSection extends StatelessWidget {
 }
 
 class _ActivitySection extends StatefulWidget {
+  const _ActivitySection();
   @override
   State<_ActivitySection> createState() => _ActivitySectionState();
 }
