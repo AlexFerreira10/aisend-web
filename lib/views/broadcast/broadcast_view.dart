@@ -152,6 +152,8 @@ class _DataEntrySection extends StatelessWidget {
         leadCount: vm.dynamicLeadsCount > 0 ? vm.dynamicLeadsCount : null,
         onUpload: () =>
             vm.pickAndParseFile(onError: (err) => AppToast.show(context, err)),
+        onFileDropped: (bytes, name) =>
+            vm.processFile(bytes, name, onError: (err) => AppToast.show(context, err)),
         onClear: vm.clearUpload,
       ),
       if (vm.parseWarnings != null) ...[

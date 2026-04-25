@@ -3,12 +3,15 @@ import 'package:aisend/core/constants/app_spacer.dart';
 import 'package:aisend/core/theme/context_extension.dart';
 import 'package:aisend/core/theme/custom_colors_extension.dart';
 import 'package:flutter/material.dart';
+import 'package:desktop_drop/desktop_drop.dart';
+import 'dart:typed_data';
 
 class UploadZone extends StatefulWidget {
   final String? uploadedFileName;
   final int? leadCount;
   final VoidCallback onUpload;
   final VoidCallback onClear;
+  final void Function(Uint8List bytes, String name)? onFileDropped;
 
   const UploadZone({
     super.key,
@@ -16,6 +19,7 @@ class UploadZone extends StatefulWidget {
     this.leadCount,
     required this.onUpload,
     required this.onClear,
+    this.onFileDropped,
   });
 
   @override
@@ -35,11 +39,22 @@ class _UploadZoneState extends State<UploadZone> {
       );
     }
 
-    return _DropZone(
-      isDragOver: _dragOver,
-      onDragEnter: () => setState(() => _dragOver = true),
-      onDragExit: () => setState(() => _dragOver = false),
-      onTap: widget.onUpload,
+    return DropTarget(
+      onDragEntered: (details) => setState(() => _dragOver = true),
+      onDragExited: (details) => setState(() => _dragOver = false),
+      onDragDone: (details) async {
+        if (details.files.isNotEmpty && widget.onFileDropped != null) {
+          final file = details.files.first;
+          final bytes = await file.readAsBytes();
+          widget.onFileDropped!(bytes, file.name);
+        }
+      },
+      child: _DropZone(
+        isDragOver: _dragOver,
+        onDragEnter: () => setState(() => _dragOver = true),
+        onDragExit: () => setState(() => _dragOver = false),
+        onTap: widget.onUpload,
+      ),
     );
   }
 }

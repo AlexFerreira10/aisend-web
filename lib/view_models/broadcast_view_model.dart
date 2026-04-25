@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:aisend/data/services/schemas/api_exception.dart';
 import 'package:aisend/models/follow_up_rule_model.dart';
 import 'package:aisend/models/instance_model.dart';
@@ -113,9 +114,16 @@ class BroadcastViewModel extends ChangeNotifier {
       if (result == null || result.files.single.bytes == null) return;
 
       final file = result.files.single;
-      final bytes = file.bytes!;
-      final ext = file.extension?.toLowerCase() ?? '';
+      await processFile(file.bytes!, file.name, onError: onError);
+    } catch (e) {
+      debugPrint('[BroadcastVM] Error picking file: $e');
+      onError?.call('Erro ao abrir seletor de arquivos.');
+    }
+  }
 
+  Future<void> processFile(Uint8List bytes, String fileName, {void Function(String error)? onError}) async {
+    try {
+      final ext = fileName.split('.').last.toLowerCase();
       _parseWarnings = null;
 
       if (ext == 'json') {
@@ -135,7 +143,7 @@ class BroadcastViewModel extends ChangeNotifier {
               createdAt: DateTime.now(),
             );
           }).where((l) => l.phone.isNotEmpty).toList();
-          _uploadedFileName = file.name;
+          _uploadedFileName = fileName;
           _leadsFromBase = false;
           notifyListeners();
         } else {
@@ -143,14 +151,14 @@ class BroadcastViewModel extends ChangeNotifier {
         }
       } else {
         // CSV / XLSX → backend parse
-        final parsed = await _broadcastService.parseContacts(bytes, file.name);
+        final parsed = await _broadcastService.parseContacts(bytes, fileName);
         _dynamicLeads = parsed.contacts.map((c) => LeadModel(
               id: '${DateTime.now().millisecondsSinceEpoch}${c.phone}',
               name: c.name,
               phone: c.phone,
               createdAt: DateTime.now(),
             )).toList();
-        _uploadedFileName = file.name;
+        _uploadedFileName = fileName;
         _leadsFromBase = false;
         if (parsed.warnings.isNotEmpty) {
           _parseWarnings = '${parsed.warnings.length} ignorado(s): ${parsed.warnings.first}'
@@ -159,7 +167,7 @@ class BroadcastViewModel extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      debugPrint('[BroadcastVM] Error importing file: $e');
+      debugPrint('[BroadcastVM] Error processing file: $e');
       final msg = e.toString().contains('401') 
           ? 'Não autorizado. Verifique sua chave de API.'
           : 'Erro ao carregar arquivo. Verifique o formato.';
