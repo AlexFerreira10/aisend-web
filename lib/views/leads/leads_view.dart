@@ -4,8 +4,7 @@ import 'package:aisend/core/theme/context_extension.dart';
 import 'package:aisend/view_models/leads_view_model.dart';
 import 'package:aisend/views/leads/widgets/lead_form_dialog.dart';
 import 'package:aisend/views/leads/widgets/leads_table.dart';
-import 'package:aisend/widgets/aisend_app_bar.dart';
-import 'package:aisend/widgets/aisend_drawer.dart';
+import 'package:aisend/widgets/aisend_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -17,9 +16,8 @@ class LeadsView extends StatelessWidget {
     final vm = context.watch<LeadsViewModel>();
     final isMobile = context.isMobile;
 
-    return Scaffold(
-      appBar: const AiSendAppBar(currentRoute: '/leads'),
-      drawer: const AiSendDrawer(currentRoute: '/leads'),
+    return AiSendScaffold(
+      currentRoute: '/leads',
       floatingActionButton: isMobile
           ? FloatingActionButton.extended(
               onPressed: () => _openCreate(context),
@@ -82,14 +80,18 @@ class _PageHeader extends StatelessWidget {
   const _PageHeader({required this.onCreateTap});
 
   @override
-  Widget build(BuildContext context) => Row(
+  Widget build(BuildContext context) {
+    final hasSidebar = MediaQuery.sizeOf(context).width >= 900;
+    return Row(
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Gestão de Leads', style: context.textTheme.displayMedium),
-                const AppSpacerVertical.small(),
+                if (!hasSidebar) ...[
+                  Text('Gestão de Leads', style: context.textTheme.displayMedium),
+                  const AppSpacerVertical.small(),
+                ],
                 Text(
                   'Cadastre e gerencie sua base de contatos',
                   style: context.textTheme.bodyMedium?.copyWith(
@@ -107,6 +109,7 @@ class _PageHeader extends StatelessWidget {
             ),
         ],
       );
+  }
 }
 
 // ─── Filter Row ───────────────────────────────────────────────────────────────

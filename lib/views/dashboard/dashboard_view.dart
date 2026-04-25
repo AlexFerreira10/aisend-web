@@ -5,21 +5,19 @@ import 'package:aisend/core/theme/custom_colors_extension.dart';
 import 'package:aisend/core/utils/app_formatters.dart';
 import 'package:aisend/core/utils/app_toast.dart';
 import 'package:aisend/view_models/dashboard_view_model.dart';
-import 'package:aisend/widgets/aisend_app_bar.dart';
+import 'package:aisend/widgets/aisend_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:provider/provider.dart';
 import 'widgets/kpi_card.dart';
 import 'widgets/lead_table.dart';
-import 'package:aisend/widgets/aisend_drawer.dart';
 
 class DashboardView extends StatelessWidget {
   const DashboardView({super.key});
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-      appBar: const AiSendAppBar(currentRoute: '/'),
-      drawer: const AiSendDrawer(currentRoute: '/'),
+  Widget build(BuildContext context) => AiSendScaffold(
+      currentRoute: '/',
       body: Builder(
         builder: (context) {
           final vm = context.watch<DashboardViewModel>();
@@ -83,14 +81,15 @@ class DashboardView extends StatelessWidget {
 
 class _PageHeader extends StatelessWidget {
   @override
-  Widget build(BuildContext context) => Column(
+  Widget build(BuildContext context) {
+    final hasSidebar = MediaQuery.sizeOf(context).width >= 900;
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(
-          'Central de Resultados',
-          style: context.textTheme.displayMedium,
-        ),
-        const AppSpacerVertical.small(),
+        if (!hasSidebar) ...[
+          Text('Central de Resultados', style: context.textTheme.displayMedium),
+          const AppSpacerVertical.small(),
+        ],
         Text(
           'Visão geral da sua base de contatos',
           style: context.textTheme.bodyMedium?.copyWith(
@@ -99,6 +98,7 @@ class _PageHeader extends StatelessWidget {
         ),
       ],
     );
+  }
 }
 
 class _FilterRow extends StatelessWidget {

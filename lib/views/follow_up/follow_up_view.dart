@@ -4,8 +4,7 @@ import 'package:aisend/core/theme/context_extension.dart';
 import 'package:aisend/models/follow_up_rule_model.dart';
 import 'package:aisend/models/instance_model.dart';
 import 'package:aisend/view_models/follow_up_view_model.dart';
-import 'package:aisend/widgets/aisend_app_bar.dart';
-import 'package:aisend/widgets/aisend_drawer.dart';
+import 'package:aisend/widgets/aisend_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -16,9 +15,8 @@ class FollowUpView extends StatelessWidget {
   Widget build(BuildContext context) {
     final vm = context.watch<FollowUpViewModel>();
 
-    return Scaffold(
-      appBar: const AiSendAppBar(currentRoute: '/follow_up'),
-      drawer: const AiSendDrawer(currentRoute: '/follow_up'),
+    return AiSendScaffold(
+      currentRoute: '/follow_up',
       body: SingleChildScrollView(
         padding: AppDimensions.paddingExtraLarge(context),
         child: Column(
