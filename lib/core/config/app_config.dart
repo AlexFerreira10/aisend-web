@@ -29,6 +29,9 @@ abstract final class AppConfig {
       '$baseUrl/api/outbound/scheduled/$id';
 
 
+  static String leadEndpoint(String id) => '$baseUrl/api/leads/$id';
+  static String leadMessageEndpoint(String id) => '$baseUrl/api/leads/$id/message';
+
   static String messagesEndpoint(String phone) =>
       '$baseUrl/api/leads/$phone/messages';
 

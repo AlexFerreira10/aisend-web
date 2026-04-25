@@ -1,0 +1,46 @@
+name: Deploy Frontend Staging
+
+on:
+  push:
+    branches: [ development ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.0'
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Web Staging
+        run: |
+          flutter build web --release \
+            --dart-define=BASE_URL=${{ secrets.API_URL_STAGING }} \
+            --dart-define=API_KEY=${{ secrets.API_KEY_STAGING }}
+
+      - name: Prepare EC2 directory
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            sudo mkdir -p /var/www/aisend-staging
+            sudo chown -R ubuntu:ubuntu /var/www/aisend-staging
+
+      - name: Copy files to EC2 Staging
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "build/web/*"
+          target: "/var/www/aisend-staging"
+          strip_components: 2

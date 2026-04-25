@@ -7,6 +7,7 @@ import 'views/dashboard/dashboard_view.dart';
 import 'views/broadcast/broadcast_view.dart';
 import 'views/lead_detail/lead_detail_view.dart';
 import 'views/follow_up/follow_up_view.dart';
+import 'views/leads/leads_view.dart';
 import 'views/schedule/schedule_view.dart';
 
 void main() {
@@ -29,6 +30,7 @@ class AiSendApp extends StatelessWidget {
             '/broadcast': (_) => const BroadcastView(),
             '/schedule': (_) => const ScheduleView(),
             '/follow_up': (_) => const FollowUpView(),
+            '/leads': (_) => const LeadsView(),
           },
           onGenerateRoute: (settings) {
             if (settings.name == '/lead_detail') {

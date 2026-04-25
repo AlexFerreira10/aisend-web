@@ -14,6 +14,7 @@ class LeadsService {
     String? classification,
     bool? waitingHuman,
     String? search,
+    String? consultantId,
     int page = 1,
     int pageSize = 20,
   }) async {
@@ -24,6 +25,7 @@ class LeadsService {
       'classification': ?classification,
       'waitingHuman': ?waitingHuman?.toString(),
       'search': ?search,
+      'consultantId': ?consultantId,
     };
     final uri =
         Uri.parse(AppConfig.leadsEndpoint).replace(queryParameters: params);
@@ -57,5 +59,21 @@ class LeadsService {
       AppConfig.waitingEndpoint(phone),
       body: {'waitingHuman': waiting},
     );
+  }
+
+  Future<void> createLead(Map<String, dynamic> dto) async {
+    await _api.post(AppConfig.leadsEndpoint, body: dto);
+  }
+
+  Future<void> updateLead(String id, Map<String, dynamic> dto) async {
+    await _api.put(AppConfig.leadEndpoint(id), body: dto);
+  }
+
+  Future<void> deleteLead(String id) async {
+    await _api.delete(AppConfig.leadEndpoint(id));
+  }
+
+  Future<void> sendMessage(String id, Map<String, dynamic> dto) async {
+    await _api.post(AppConfig.leadMessageEndpoint(id), body: dto);
   }
 }

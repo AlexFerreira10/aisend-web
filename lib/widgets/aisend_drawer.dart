@@ -34,6 +34,13 @@ class AiSendDrawer extends StatelessWidget {
               ),
               const AppSpacerVertical.regular(),
               _DrawerItem(
+                label: 'Gestão de Leads',
+                icon: Icons.people_rounded,
+                isActive: currentRoute == '/leads',
+                onTap: () => _navigateTo(context, '/leads'),
+              ),
+              const AppSpacerVertical.regular(),
+              _DrawerItem(
                 label: 'Máquina de disparos',
                 icon: Icons.send_rounded,
                 isActive: currentRoute == '/broadcast',

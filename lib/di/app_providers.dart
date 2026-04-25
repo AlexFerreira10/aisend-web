@@ -9,6 +9,7 @@ import '../data/services/schedule_service.dart';
 import '../view_models/dashboard_view_model.dart';
 import '../view_models/follow_up_view_model.dart';
 import '../view_models/broadcast_view_model.dart';
+import '../view_models/leads_view_model.dart';
 import '../view_models/schedule_view_model.dart';
 
 class AppProviders {
@@ -53,6 +54,12 @@ class AppProviders {
       create: (ctx) => FollowUpViewModel(
         consultantsService: ctx.read<ConsultantsService>(),
         rulesService: ctx.read<FollowUpRulesService>(),
+      ),
+    ),
+    ChangeNotifierProvider<LeadsViewModel>(
+      create: (ctx) => LeadsViewModel(
+        leadsService: ctx.read<LeadsService>(),
+        consultantsService: ctx.read<ConsultantsService>(),
       ),
     ),
   ];
