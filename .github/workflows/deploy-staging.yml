@@ -22,8 +22,8 @@ jobs:
       - name: Build Web Staging
         run: |
           flutter build web --release \
-            --dart-define=BASE_URL=${{ secrets.API_URL_STAGING }} \
-            --dart-define=API_KEY=${{ secrets.API_KEY_STAGING }}
+            --dart-define=BASE_URL=http://56.125.23.170:5114 \
+            --dart-define=API_KEY=aisend-test-2026
 
       - name: Prepare wwwroot directory
         uses: appleboy/ssh-action@v1.0.3
