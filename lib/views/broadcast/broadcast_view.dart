@@ -95,10 +95,6 @@ class _MainContent extends StatelessWidget {
           title: 'Envio',
           child: const SendModeSection(),
         ),
-        if (vm.previewError != null) ...[
-          const AppSpacerVertical.regular(),
-          _ParseWarning(message: vm.previewError!),
-        ],
         if (vm.hasPreview && !vm.isBroadcasting && !vm.isCompleted) ...[
           const AppSpacerVertical.large(),
           PreviewCard(

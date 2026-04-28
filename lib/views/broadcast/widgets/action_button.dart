@@ -92,7 +92,7 @@ class ActionButton extends StatelessWidget {
             onTap: vm.isPreviewing
                 ? null
                 : (vm.canPreview
-                      ? vm.previewBlast
+                      ? () => vm.previewBlast(onError: (msg) => AppToast.show(context, msg))
                       : () => _showValidationToast(context, vm)),
             useGradient: false,
           ),
@@ -120,7 +120,7 @@ class ActionButton extends StatelessWidget {
             onTap: vm.isPreviewing
                 ? null
                 : (vm.canPreview
-                      ? vm.previewBlast
+                      ? () => vm.previewBlast(onError: (msg) => AppToast.show(context, msg))
                       : () => _showValidationToast(context, vm)),
             useGradient: false,
           ),

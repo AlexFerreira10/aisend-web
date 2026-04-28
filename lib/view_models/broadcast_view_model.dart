@@ -81,7 +81,6 @@ class BroadcastViewModel extends ChangeNotifier {
   void setMessageMode(MessageMode mode) {
     _messageMode = mode;
     _previewParts = [];
-    _previewError = null;
     notifyListeners();
   }
 
@@ -208,12 +207,10 @@ class BroadcastViewModel extends ChangeNotifier {
   // ─── Preview State ───────────────────────────────────────────────────────────
   List<String> _previewParts = [];
   bool _isPreviewing = false;
-  String? _previewError;
 
   List<String> get previewParts => _previewParts;
   bool get isPreviewing => _isPreviewing;
   bool get hasPreview => _previewParts.isNotEmpty;
-  String? get previewError => _previewError;
 
   bool get _hasValidMessage =>
       _messageMode == MessageMode.aiGenerated
@@ -228,23 +225,23 @@ class BroadcastViewModel extends ChangeNotifier {
       !_isBroadcasting &&
       !_isPreviewing;
 
-  Future<void> previewBlast() async {
+  Future<void> previewBlast({void Function(String)? onError}) async {
     if (!canPreview) return;
     _isPreviewing = true;
     _previewParts = [];
-    _previewError = null;
     notifyListeners();
     try {
       final sampleName = _dynamicLeads.isNotEmpty ? _dynamicLeads.first.name : 'João';
       final body = <String, dynamic>{
-        'instancia': _selectedInstance!.consultantId ?? _selectedInstance!.id,
+        'instancia': _selectedInstance!.id,
         'motivo': _contactReason,
         'sampleName': sampleName,
         if (_messageMode == MessageMode.fixed) 'fixedMessage': _fixedMessage.trim(),
       };
       _previewParts = await _broadcastService.preview(body);
     } catch (e) {
-      _previewError = 'Erro ao gerar prévia: $e';
+      final msg = e is ApiException ? e.message : 'Erro ao gerar prévia.';
+      onError?.call(msg);
     } finally {
       _isPreviewing = false;
       notifyListeners();
@@ -253,7 +250,6 @@ class BroadcastViewModel extends ChangeNotifier {
 
   void resetPreview() {
     _previewParts = [];
-    _previewError = null;
     notifyListeners();
   }
 
@@ -323,7 +319,7 @@ class BroadcastViewModel extends ChangeNotifier {
         notifyListeners();
 
         final payload = <String, dynamic>{
-          'instancia': _selectedInstance!.consultantId ?? _selectedInstance!.id,
+          'instancia': _selectedInstance!.id,
           'motivo': _contactReason,
           'contacts': batch,
           if (_messageMode == MessageMode.fixed)
@@ -393,7 +389,7 @@ class BroadcastViewModel extends ChangeNotifier {
           .map((l) => {'phone': l.phone, 'name': l.name})
           .toList();
       await _scheduleService.createSchedule({
-        'instancia': _selectedInstance!.consultantId ?? _selectedInstance!.id,
+        'instancia': _selectedInstance!.id,
         'motivo': _contactReason,
         'scheduledAt': _scheduledAt!.toUtc().toIso8601String(),
         'contacts': contacts,
@@ -487,7 +483,6 @@ class BroadcastViewModel extends ChangeNotifier {
     _currentLeadName = '';
     _broadcastError = null;
     _previewParts = [];
-    _previewError = null;
     notifyListeners();
   }
 }
