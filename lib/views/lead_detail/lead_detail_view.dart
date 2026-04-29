@@ -36,6 +36,7 @@ class _LeadDetailContent extends StatefulWidget {
 
 class _LeadDetailContentState extends State<_LeadDetailContent> {
   late final LeadDetailViewModel _vm;
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -47,6 +48,7 @@ class _LeadDetailContentState extends State<_LeadDetailContent> {
   @override
   void dispose() {
     _vm.removeListener(_onVmChanged);
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -54,6 +56,18 @@ class _LeadDetailContentState extends State<_LeadDetailContent> {
     final error = _vm.toggleError;
     if (error != null && mounted) {
       AppToast.show(context, error, type: ToastType.error);
+    }
+
+    if (_scrollController.hasClients && _vm.messages.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+          );
+        }
+      });
     }
   }
 
@@ -82,7 +96,15 @@ class _LeadDetailContentState extends State<_LeadDetailContent> {
                       ),
                     ),
                   )
-                : _MessageList(messages: vm.messages),
+                : _MessageList(
+                    messages: vm.messages,
+                    scrollController: _scrollController,
+                  ),
+          ),
+          _MessageInputBar(
+            lead: widget.lead,
+            vm: vm,
+            scrollController: _scrollController,
           ),
         ],
       ),
@@ -243,10 +265,12 @@ class _ErrorState extends StatelessWidget {
 
 class _MessageList extends StatelessWidget {
   final List<MessageModel> messages;
-  const _MessageList({required this.messages});
+  final ScrollController scrollController;
+  const _MessageList({required this.messages, required this.scrollController});
 
   @override
   Widget build(BuildContext context) => ListView.builder(
+    controller: scrollController,
     padding: AppDimensions.paddingExtraLarge(context),
     itemCount: messages.length,
     itemBuilder: (context, i) => _MessageBubble(message: messages[i]),
@@ -336,5 +360,128 @@ class _MessageBubble extends StatelessWidget {
   String _formatTime(DateTime dt) {
     final local = dt.toLocal();
     return '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+  }
+}
+
+class _MessageInputBar extends StatefulWidget {
+  final LeadModel lead;
+  final LeadDetailViewModel vm;
+  final ScrollController scrollController;
+
+  const _MessageInputBar({
+    required this.lead,
+    required this.vm,
+    required this.scrollController,
+  });
+
+  @override
+  State<_MessageInputBar> createState() => _MessageInputBarState();
+}
+
+class _MessageInputBarState extends State<_MessageInputBar> {
+  final _controller = TextEditingController();
+  bool _hasText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(() {
+      final has = _controller.text.trim().isNotEmpty;
+      if (has != _hasText) setState(() => _hasText = has);
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _send() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+
+    final error = await widget.vm.sendMessage(text);
+    if (!mounted) return;
+
+    if (error != null) {
+      AppToast.show(context, error, type: ToastType.error);
+    } else {
+      _controller.clear();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (widget.scrollController.hasClients) {
+          widget.scrollController.animateTo(
+            widget.scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasConsultant = widget.lead.consultantId != null;
+    final canSend = hasConsultant && _hasText && !widget.vm.isSending;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: context.colorScheme.surfaceContainer,
+        border: Border(
+          top: BorderSide(color: context.colorScheme.outline, width: 1),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: SafeArea(
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                enabled: hasConsultant,
+                onSubmitted: canSend ? (_) => _send() : null,
+                style: context.textTheme.bodyMedium,
+                decoration: InputDecoration(
+                  hintText: hasConsultant
+                      ? 'Digite uma mensagem...'
+                      : 'Lead sem consultor associado',
+                  hintStyle: context.textTheme.bodyMedium?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                ),
+              ),
+            ),
+            const AppSpacerHorizontal.small(),
+            SizedBox(
+              width: 40,
+              height: 40,
+              child: widget.vm.isSending
+                  ? const Padding(
+                      padding: EdgeInsets.all(10),
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : IconButton(
+                      onPressed: canSend ? _send : null,
+                      icon: Icon(
+                        Icons.send_rounded,
+                        size: 20,
+                        color: canSend
+                            ? context.colorScheme.primary
+                            : context.colorScheme.onSurfaceVariant
+                                .withValues(alpha: 0.4),
+                      ),
+                      padding: EdgeInsets.zero,
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -13,6 +13,7 @@ class LeadDetailViewModel extends ChangeNotifier {
   bool _updatingWaiting = false;
   bool _waitingHuman;
   String? _toggleError;
+  bool _isSending = false;
 
   LeadDetailViewModel({required LeadsService leadsService, required this.lead})
       : _leadsService = leadsService,
@@ -26,6 +27,7 @@ class LeadDetailViewModel extends ChangeNotifier {
   bool get waitingHuman => _waitingHuman;
   bool get updatingWaiting => _updatingWaiting;
   String? get toggleError => _toggleError;
+  bool get isSending => _isSending;
 
   Future<void> loadMessages() async {
     _isLoading = true;
@@ -33,11 +35,36 @@ class LeadDetailViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-  _messages = await _leadsService.fetchMessages(lead.phone);
+      _messages = await _leadsService.fetchMessages(lead.phone);
     } catch (_) {
       _hasError = true;
     } finally {
       _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<String?> sendMessage(String content) async {
+    _isSending = true;
+    notifyListeners();
+
+    try {
+      final response = await _leadsService.sendDirectMessage(lead.id, content);
+      final saved = MessageModel(
+        id: response['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        role: 'assistant',
+        content: content,
+        createdAt: response['createdAt'] != null
+            ? DateTime.parse(response['createdAt'].toString())
+            : DateTime.now(),
+      );
+      _messages = [..._messages, saved];
+      _waitingHuman = true;
+      return null;
+    } catch (e) {
+      return 'Erro ao enviar mensagem: $e';
+    } finally {
+      _isSending = false;
       notifyListeners();
     }
   }
