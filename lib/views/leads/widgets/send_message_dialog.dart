@@ -122,8 +122,8 @@ class _SendMessageDialogState extends State<SendMessageDialog> {
         SnackBar(content: Text(error), backgroundColor: Colors.red),
       );
     } else {
-      Navigator.of(context).pop();
       AppToast.show(context, 'Disparo iniciado para ${widget.lead.name}!');
+      Navigator.of(context).pop();
     }
   }
 

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:aisend/data/services/schemas/api_exception.dart';
 import 'package:flutter/foundation.dart';
 import '../data/services/leads_service.dart';
 import '../data/services/consultants_service.dart';
@@ -155,7 +156,7 @@ class LeadsViewModel extends ChangeNotifier {
       await _leadsService.sendMessage(id, dto);
       return null;
     } catch (e) {
-      return e.toString();
+      return e is ApiException ? e.message : 'Erro ao disparar mensagem. Tente novamente.';
     }
   }
 
