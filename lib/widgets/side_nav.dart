@@ -1,8 +1,10 @@
 import 'package:aisend/core/constants/app_dimensions.dart';
 import 'package:aisend/core/constants/app_spacer.dart';
+import 'package:aisend/core/providers/theme_provider.dart';
 import 'package:aisend/core/theme/context_extension.dart';
 import 'package:aisend/core/theme/custom_colors_extension.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class SideNav extends StatelessWidget {
   final String currentRoute;
@@ -150,70 +152,115 @@ class _SideNavItemState extends State<_SideNavItem> {
   bool _hovered = false;
 
   @override
-  Widget build(BuildContext context) => MouseRegion(
-        cursor: SystemMouseCursors.click,
-        onEnter: (_) => setState(() => _hovered = true),
-        onExit: (_) => setState(() => _hovered = false),
-        child: GestureDetector(
-          onTap: widget.onTap,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
+  Widget build(BuildContext context) {
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+
+    final decoration = BoxDecoration(
+      color: widget.isActive
+          ? context.colorScheme.primary.withValues(alpha: 0.12)
+          : _hovered
+          ? context.colorScheme.surfaceContainerHighest
+          : Colors.transparent,
+      borderRadius: AppDimensions.radiusMedium,
+      border: Border.all(
+        color: widget.isActive
+            ? context.colorScheme.primary.withValues(alpha: 0.3)
+            : Colors.transparent,
+        width: 1,
+      ),
+    );
+
+    final content = Row(
+      children: <Widget>[
+        Icon(
+          widget.icon,
+          size: 20,
+          color: widget.isActive
+              ? context.colorScheme.primary
+              : _hovered
+              ? context.colorScheme.onSurface
+              : context.colorScheme.onSurfaceVariant,
+        ),
+        const AppSpacerHorizontal.medium(),
+        Expanded(
+          child: Text(
+            widget.label,
+            overflow: TextOverflow.ellipsis,
+            style: context.textTheme.bodyMedium?.copyWith(
+              fontWeight: widget.isActive ? FontWeight.w600 : FontWeight.w400,
               color: widget.isActive
-                  ? context.colorScheme.primary.withValues(alpha: 0.12)
+                  ? context.colorScheme.primary
                   : _hovered
-                  ? context.colorScheme.surfaceContainerHighest
-                  : Colors.transparent,
-              borderRadius: AppDimensions.radiusMedium,
-              border: Border.all(
-                color: widget.isActive
-                    ? context.colorScheme.primary.withValues(alpha: 0.3)
-                    : Colors.transparent,
-                width: 1,
-              ),
-            ),
-            child: Row(
-              children: <Widget>[
-                Icon(
-                  widget.icon,
-                  size: 20,
-                  color: widget.isActive
-                      ? context.colorScheme.primary
-                      : _hovered
-                      ? context.colorScheme.onSurface
-                      : context.colorScheme.onSurfaceVariant,
-                ),
-                const AppSpacerHorizontal.medium(),
-                Expanded(
-                  child: Text(
-                    widget.label,
-                    style: context.textTheme.bodyMedium?.copyWith(
-                      fontWeight: widget.isActive ? FontWeight.w600 : FontWeight.w400,
-                      color: widget.isActive
-                          ? context.colorScheme.primary
-                          : _hovered
-                          ? context.colorScheme.onSurface
-                          : context.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-              ],
+                  ? context.colorScheme.onSurface
+                  : context.colorScheme.onSurfaceVariant,
             ),
           ),
         ),
-      );
+      ],
+    );
+
+    return Semantics(
+      label: widget.label,
+      button: true,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: AppDimensions.radiusMedium,
+          child: InkWell(
+            onTap: widget.onTap,
+            borderRadius: AppDimensions.radiusMedium,
+            child: reduceMotion
+                ? Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: decoration,
+                    child: content,
+                  )
+                : AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: decoration,
+                    child: content,
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _SideNavFooter extends StatelessWidget {
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Text(
-          'v1.1.0 - Test Mode',
-          style: context.textTheme.labelSmall?.copyWith(
-            color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+  Widget build(BuildContext context) {
+    final themeProvider = context.watch<ThemeProvider>();
+    final isDark = themeProvider.mode == ThemeMode.dark ||
+        (themeProvider.mode == ThemeMode.system &&
+            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Text(
+            'v1.1.0 - Test Mode',
+            style: context.textTheme.labelSmall?.copyWith(
+              color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            ),
           ),
-        ),
-      );
+          const Spacer(),
+          IconButton(
+            icon: Icon(
+              isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+              size: 18,
+            ),
+            tooltip: 'Alternar tema',
+            color: context.colorScheme.onSurfaceVariant,
+            onPressed: themeProvider.toggleDarkLight,
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -1,6 +1,7 @@
 import 'package:aisend/core/constants/app_dimensions.dart';
 import 'package:aisend/core/constants/app_spacer.dart';
 import 'package:aisend/core/theme/context_extension.dart';
+import 'package:aisend/core/widgets/app_dialog.dart';
 import 'package:aisend/models/enums/lead_status_enum.dart';
 import 'package:aisend/models/lead_model.dart';
 import 'package:aisend/view_models/broadcast_leads_dialog_view_model.dart';
@@ -35,36 +36,32 @@ class _BroadcastLeadsDialogState extends State<BroadcastLeadsDialog> {
   Widget build(BuildContext context) {
     final vm = context.watch<BroadcastLeadsDialogViewModel>();
 
-    return AlertDialog(
-      title: Row(
-        children: [
-          Icon(Icons.manage_search_rounded,
-              color: context.colorScheme.primary, size: 22),
-          const AppSpacerHorizontal.regular(),
-          const Expanded(child: Text('Buscar Leads')),
-          if (vm.selectedCount > 0)
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: context.colorScheme.primary.withValues(alpha: 0.12),
-                borderRadius: AppDimensions.radiusMedium,
-              ),
-              child: Text(
-                '${vm.selectedCount} selecionado${vm.selectedCount > 1 ? 's' : ''}',
-                style: context.textTheme.labelSmall?.copyWith(
-                  color: context.colorScheme.primary,
-                ),
-              ),
-            ),
-        ],
-      ),
+    return AppDialog(
+      title: 'Buscar Leads',
+      icon: Icons.manage_search_rounded,
+      width: context.isDesktop ? 680 : 480,
       content: SizedBox(
-        width: context.isDesktop ? 680 : double.maxFinite,
-        height: 520,
+        height: 460,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (vm.selectedCount > 0)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: context.colorScheme.primary.withValues(alpha: 0.12),
+                    borderRadius: AppDimensions.radiusMedium,
+                  ),
+                  child: Text(
+                    '${vm.selectedCount} selecionado${vm.selectedCount > 1 ? 's' : ''}',
+                    style: context.textTheme.labelSmall?.copyWith(
+                      color: context.colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ),
             _SearchField(
               controller: _searchController,
               onChanged: vm.setSearch,
@@ -192,8 +189,9 @@ class _StatusChip extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
+  Widget build(BuildContext context) => InkWell(
         onTap: onTap,
+        borderRadius: AppDimensions.radiusMedium,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -331,7 +329,11 @@ class _LeadTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(lead.name, style: context.textTheme.bodyMedium),
+                  Text(
+                    lead.name,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.textTheme.bodyMedium,
+                  ),
                   Text(
                     lead.phone,
                     style: context.textTheme.bodySmall?.copyWith(
@@ -342,8 +344,7 @@ class _LeadTile extends StatelessWidget {
               ),
             ),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
                 color: context.colorScheme.surfaceContainer,
                 borderRadius: AppDimensions.radiusSmall,
@@ -388,8 +389,8 @@ class _BottomRow extends StatelessWidget {
           const Spacer(),
           IconButton(
             icon: const Icon(Icons.chevron_left_rounded),
-            onPressed:
-                vm.page > 1 ? () => vm.setPage(vm.page - 1) : null,
+            tooltip: 'Página anterior',
+            onPressed: vm.page > 1 ? () => vm.setPage(vm.page - 1) : null,
           ),
           Text(
             '${vm.page} / ${vm.totalPages}',
@@ -397,9 +398,9 @@ class _BottomRow extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.chevron_right_rounded),
-            onPressed: vm.page < vm.totalPages
-                ? () => vm.setPage(vm.page + 1)
-                : null,
+            tooltip: 'Próxima página',
+            onPressed:
+                vm.page < vm.totalPages ? () => vm.setPage(vm.page + 1) : null,
           ),
         ],
       );

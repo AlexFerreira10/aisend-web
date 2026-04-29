@@ -1,4 +1,6 @@
 import 'package:aisend/core/constants/app_spacer.dart';
+import 'package:aisend/core/theme/custom_colors_extension.dart';
+import 'package:aisend/core/widgets/app_dialog.dart';
 import 'package:aisend/models/enums/funnel_status_enum.dart';
 import 'package:aisend/models/lead_model.dart';
 import 'package:aisend/view_models/leads_view_model.dart';
@@ -59,13 +61,9 @@ class _LeadFormDialogState extends State<LeadFormDialog> {
     final dto = {
       'name': _name.text.trim(),
       'phone': _phone.text.trim(),
-      'specialty': _specialty.text.trim().isEmpty
-          ? null
-          : _specialty.text.trim(),
+      'specialty': _specialty.text.trim().isEmpty ? null : _specialty.text.trim(),
       'city': _city.text.trim().isEmpty ? null : _city.text.trim(),
-      'registration': _registration.text.trim().isEmpty
-          ? null
-          : _registration.text.trim(),
+      'registration': _registration.text.trim().isEmpty ? null : _registration.text.trim(),
       'consultantId': _selectedConsultantId,
       'funnelStatus': _funnelStatus.asString,
     };
@@ -82,7 +80,10 @@ class _LeadFormDialogState extends State<LeadFormDialog> {
 
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(error),
+          backgroundColor: context.customColors.error,
+        ),
       );
     } else {
       Navigator.of(context).pop();
@@ -93,59 +94,55 @@ class _LeadFormDialogState extends State<LeadFormDialog> {
   Widget build(BuildContext context) {
     final vm = context.watch<LeadsViewModel>();
 
-    return AlertDialog(
-      title: Text(_isEditing ? 'Editar Lead' : 'Novo Lead'),
+    return AppDialog(
+      title: _isEditing ? 'Editar Lead' : 'Novo Lead',
+      icon: _isEditing ? Icons.edit_rounded : Icons.person_add_rounded,
       content: SizedBox(
         width: 480,
         child: Form(
           key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (widget.lead == null) ...[
-                  _Field(
-                    controller: _name,
-                    label: 'Nome *',
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'Nome obrigatório'
-                        : null,
-                  ),
-                  const AppSpacerVertical.medium(),
-                  _Field(
-                    controller: _phone,
-                    label: 'Telefone *',
-                    hint: 'Ex: 11999990000',
-                    keyboardType: TextInputType.phone,
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) {
-                        return 'Telefone obrigatório';
-                      }
-                      final digits = v.replaceAll(RegExp(r'\D'), '');
-                      if (digits.length < 10) return 'Mínimo 10 dígitos';
-                      return null;
-                    },
-                  ),
-                  const AppSpacerVertical.medium(),
-                  _ConsultantDropdown(
-                    instances: vm.instances,
-                    value: _selectedConsultantId,
-                    onChanged: (v) => setState(() => _selectedConsultantId = v),
-                  ),
-                  const AppSpacerVertical.medium(),
-                ],
-                _Field(controller: _specialty, label: 'Especialidade'),
-                const AppSpacerVertical.medium(),
-                _Field(controller: _city, label: 'Cidade'),
-                const AppSpacerVertical.medium(),
-                _Field(controller: _registration, label: 'Registro (CRM/CRF)'),
-                const AppSpacerVertical.medium(),
-                _FunnelStatusDropdown(
-                  value: _funnelStatus,
-                  onChanged: (v) => setState(() => _funnelStatus = v!),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (widget.lead == null) ...[
+                _Field(
+                  controller: _name,
+                  label: 'Nome *',
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? 'Nome obrigatório' : null,
                 ),
+                const AppSpacerVertical.medium(),
+                _Field(
+                  controller: _phone,
+                  label: 'Telefone *',
+                  hint: 'Ex: 11999990000',
+                  keyboardType: TextInputType.phone,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'Telefone obrigatório';
+                    final digits = v.replaceAll(RegExp(r'\D'), '');
+                    if (digits.length < 10) return 'Mínimo 10 dígitos';
+                    return null;
+                  },
+                ),
+                const AppSpacerVertical.medium(),
+                _ConsultantDropdown(
+                  instances: vm.instances,
+                  value: _selectedConsultantId,
+                  onChanged: (v) => setState(() => _selectedConsultantId = v),
+                ),
+                const AppSpacerVertical.medium(),
               ],
-            ),
+              _Field(controller: _specialty, label: 'Especialidade'),
+              const AppSpacerVertical.medium(),
+              _Field(controller: _city, label: 'Cidade'),
+              const AppSpacerVertical.medium(),
+              _Field(controller: _registration, label: 'Registro (CRM/CRF)'),
+              const AppSpacerVertical.medium(),
+              _FunnelStatusDropdown(
+                value: _funnelStatus,
+                onChanged: (v) => setState(() => _funnelStatus = v!),
+              ),
+            ],
           ),
         ),
       ),
@@ -160,10 +157,7 @@ class _LeadFormDialogState extends State<LeadFormDialog> {
               ? const SizedBox(
                   width: 16,
                   height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                 )
               : Text(_isEditing ? 'Salvar' : 'Criar Lead'),
         ),

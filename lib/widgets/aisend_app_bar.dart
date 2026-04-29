@@ -32,6 +32,7 @@ class AiSendAppBar extends StatelessWidget implements PreferredSizeWidget {
           if (showDrawerIcon)
             IconButton(
               icon: const Icon(Icons.menu_rounded),
+              tooltip: 'Abrir menu',
               onPressed: () => Scaffold.of(context).openDrawer(),
               color: context.colorScheme.onSurface,
             ),
@@ -174,61 +175,81 @@ class _NavButtonState extends State<_NavButton> {
   bool _hovered = false;
 
   @override
-  Widget build(BuildContext context) => MouseRegion(
-    cursor: SystemMouseCursors.click,
-    onEnter: (_) => setState(() => _hovered = true),
-    onExit: (_) => setState(() => _hovered = false),
-    child: GestureDetector(
-      onTap: widget.onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: AppDimensions.paddingHorizontalMediumLarge(
-          context,
-        ).add(AppDimensions.paddingVerticalRegular(context)),
-        decoration: BoxDecoration(
+  Widget build(BuildContext context) {
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+
+    final padding = AppDimensions.paddingHorizontalMediumLarge(context)
+        .add(AppDimensions.paddingVerticalRegular(context));
+
+    final decoration = BoxDecoration(
+      color: widget.isActive
+          ? context.colorScheme.primary
+          : _hovered
+          ? context.colorScheme.surfaceContainerHighest
+          : Colors.transparent,
+      borderRadius: AppDimensions.radiusMedium,
+      border: Border.all(
+        color: widget.isActive
+            ? context.colorScheme.primary
+            : _hovered
+            ? context.theme.dividerColor
+            : Colors.transparent,
+        width: 1,
+      ),
+    );
+
+    final content = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Icon(
+          widget.icon,
+          size: AppDimensions.iconSmall(context),
           color: widget.isActive
-              ? context.colorScheme.primary
+              ? Colors.white
               : _hovered
-              ? context.colorScheme.surfaceContainerHighest
-              : Colors.transparent,
-          borderRadius: AppDimensions.radiusMedium,
-          border: Border.all(
-            color: widget.isActive
-                ? context.colorScheme.primary
-                : _hovered
-                ? context.theme.dividerColor
-                : Colors.transparent,
-            width: 1,
-          ),
+              ? context.colorScheme.onSurface
+              : context.colorScheme.onSurfaceVariant,
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(
-              widget.icon,
-              size: AppDimensions.iconSmall(context),
+        if (MediaQuery.sizeOf(context).width >= 680) ...[
+          const AppSpacerHorizontal.tiny(),
+          Text(
+            widget.label,
+            style: context.textTheme.labelLarge?.copyWith(
               color: widget.isActive
                   ? Colors.white
                   : _hovered
                   ? context.colorScheme.onSurface
                   : context.colorScheme.onSurfaceVariant,
             ),
-            if (MediaQuery.sizeOf(context).width >= 680) ...[
-              const AppSpacerHorizontal.tiny(),
-              Text(
-                widget.label,
-                style: context.textTheme.labelLarge?.copyWith(
-                  color: widget.isActive
-                      ? Colors.white
-                      : _hovered
-                      ? context.colorScheme.onSurface
-                      : context.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ],
+          ),
+        ],
+      ],
+    );
+
+    return Semantics(
+      label: widget.label,
+      button: true,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: AppDimensions.radiusMedium,
+          child: InkWell(
+            onTap: widget.onTap,
+            borderRadius: AppDimensions.radiusMedium,
+            child: reduceMotion
+                ? Container(padding: padding, decoration: decoration, child: content)
+                : AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: padding,
+                    decoration: decoration,
+                    child: content,
+                  ),
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

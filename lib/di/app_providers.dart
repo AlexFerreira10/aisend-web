@@ -1,5 +1,6 @@
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
+import '../core/providers/theme_provider.dart';
 import '../data/services/api_client.dart';
 import '../data/services/leads_service.dart';
 import '../data/services/broadcast_service.dart';
@@ -14,6 +15,9 @@ import '../view_models/schedule_view_model.dart';
 
 class AppProviders {
   static List<SingleChildWidget> providers = [
+    ChangeNotifierProvider<ThemeProvider>(
+      create: (_) => ThemeProvider()..init(),
+    ),
     Provider<ApiClient>(
       create: (_) => ApiClient(),
     ),

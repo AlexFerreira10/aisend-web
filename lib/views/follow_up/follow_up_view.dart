@@ -1,6 +1,7 @@
 import 'package:aisend/core/constants/app_dimensions.dart';
 import 'package:aisend/core/constants/app_spacer.dart';
 import 'package:aisend/core/theme/context_extension.dart';
+import 'package:aisend/core/widgets/app_dialog.dart';
 import 'package:aisend/models/follow_up_rule_model.dart';
 import 'package:aisend/models/instance_model.dart';
 import 'package:aisend/view_models/follow_up_view_model.dart';
@@ -249,30 +250,29 @@ class _RuleCard extends StatelessWidget {
     ),
   );
 
-  void _confirmDelete(BuildContext context) => showDialog(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('Excluir regra'),
-      content: Text(
-        'Deseja excluir "${rule.name}"? Esta ação não pode ser desfeita.',
-      ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('Cancelar'),
-        ),
-        FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: Theme.of(ctx).colorScheme.error,
-          ),
-          onPressed: () {
-            Navigator.pop(ctx);
-            vm.deleteRule(rule.id);
-          },
-          child: const Text('Excluir'),
-        ),
-      ],
+  void _confirmDelete(BuildContext context) => AppDialog.show<void>(
+    context,
+    title: 'Excluir regra',
+    icon: Icons.delete_outline_rounded,
+    content: Text(
+      'Deseja excluir "${rule.name}"? Esta ação não pode ser desfeita.',
     ),
+    actions: <Widget>[
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Cancelar'),
+      ),
+      FilledButton(
+        style: FilledButton.styleFrom(
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+        onPressed: () {
+          Navigator.pop(context);
+          vm.deleteRule(rule.id);
+        },
+        child: const Text('Excluir'),
+      ),
+    ],
   );
 }
 

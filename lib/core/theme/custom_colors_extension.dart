@@ -96,23 +96,40 @@ class AppCustomColors extends ThemeExtension<AppCustomColors> {
     );
   }
 
-  // Define the default dark instance
   static const dark = AppCustomColors(
-    statusHot: AppColors.statusHot,
-    statusHotBg: AppColors.statusHotBg,
-    statusWarm: AppColors.statusWarm,
-    statusWarmBg: AppColors.statusWarmBg,
-    statusCold: AppColors.statusCold,
-    statusColdBg: AppColors.statusColdBg,
-    success: AppColors.success,
-    successBg: AppColors.successBg,
-    error: AppColors.error,
-    errorBg: AppColors.errorBg,
-    warning: AppColors.warning,
-    warningBg: AppColors.warningBg,
-    primaryGradient: AppColors.primaryGradient,
-    logoGradient: AppColors.logoGradient,
-    surfaceGradient: AppColors.surfaceGradient,
+    statusHot: AppColorsDark.statusHot,
+    statusHotBg: AppColorsDark.statusHotBg,
+    statusWarm: AppColorsDark.statusWarm,
+    statusWarmBg: AppColorsDark.statusWarmBg,
+    statusCold: AppColorsDark.statusCold,
+    statusColdBg: AppColorsDark.statusColdBg,
+    success: AppColorsDark.success,
+    successBg: AppColorsDark.successBg,
+    error: AppColorsDark.error,
+    errorBg: AppColorsDark.errorBg,
+    warning: AppColorsDark.warning,
+    warningBg: AppColorsDark.warningBg,
+    primaryGradient: AppColorsDark.primaryGradient,
+    logoGradient: AppColorsDark.logoGradient,
+    surfaceGradient: AppColorsDark.surfaceGradient,
+  );
+
+  static const light = AppCustomColors(
+    statusHot: AppColorsLight.statusHot,
+    statusHotBg: AppColorsLight.statusHotBg,
+    statusWarm: AppColorsLight.statusWarm,
+    statusWarmBg: AppColorsLight.statusWarmBg,
+    statusCold: AppColorsLight.statusCold,
+    statusColdBg: AppColorsLight.statusColdBg,
+    success: AppColorsLight.success,
+    successBg: AppColorsLight.successBg,
+    error: AppColorsLight.error,
+    errorBg: AppColorsLight.errorBg,
+    warning: AppColorsLight.warning,
+    warningBg: AppColorsLight.warningBg,
+    primaryGradient: AppColorsLight.primaryGradient,
+    logoGradient: AppColorsLight.logoGradient,
+    surfaceGradient: AppColorsLight.surfaceGradient,
   );
 }
 

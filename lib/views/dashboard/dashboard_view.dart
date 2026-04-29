@@ -494,36 +494,44 @@ class _Chip extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: isActive
-                ? context.colorScheme.primary
-                : context.colorScheme.surfaceContainer,
-            borderRadius: AppDimensions.radiusMedium,
-            border: Border.all(
-              color: isActive
-                  ? context.colorScheme.primary
-                  : context.colorScheme.outline,
-              width: 1,
+  Widget build(BuildContext context) {
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final decoration = BoxDecoration(
+      color: isActive
+          ? context.colorScheme.primary
+          : context.colorScheme.surfaceContainer,
+      borderRadius: AppDimensions.radiusMedium,
+      border: Border.all(
+        color: isActive
+            ? context.colorScheme.primary
+            : context.colorScheme.outline,
+        width: 1,
+      ),
+    );
+    final child = Text(
+      label,
+      style: context.textTheme.labelMedium?.copyWith(
+        color: isActive ? Colors.white : context.colorScheme.onSurfaceVariant,
+        fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+      ),
+    );
+    return InkWell(
+      onTap: onTap,
+      borderRadius: AppDimensions.radiusMedium,
+      child: reduceMotion
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: decoration,
+              child: child,
+            )
+          : AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: decoration,
+              child: child,
             ),
-          ),
-          child: Text(
-            label,
-            style: context.textTheme.labelMedium?.copyWith(
-              color: isActive
-                  ? Colors.white
-                  : context.colorScheme.onSurfaceVariant,
-              fontWeight:
-                  isActive ? FontWeight.w600 : FontWeight.w400,
-            ),
-          ),
-        ),
-      );
+    );
+  }
 }
 
 class _Pagination extends StatelessWidget {
@@ -540,6 +548,7 @@ class _Pagination extends StatelessWidget {
       children: [
         IconButton(
           icon: const Icon(Icons.chevron_left_rounded),
+          tooltip: 'Página anterior',
           onPressed: page > 1 ? () => vm.setActivityPage(page - 1) : null,
           color: context.colorScheme.onSurfaceVariant,
         ),
@@ -551,6 +560,7 @@ class _Pagination extends StatelessWidget {
         ),
         IconButton(
           icon: const Icon(Icons.chevron_right_rounded),
+          tooltip: 'Próxima página',
           onPressed:
               page < total ? () => vm.setActivityPage(page + 1) : null,
           color: context.colorScheme.onSurfaceVariant,
@@ -583,8 +593,9 @@ class _GradientButtonState extends State<_GradientButton> {
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
+      child: InkWell(
         onTap: widget.onTap,
+        borderRadius: AppDimensions.radiusLarge,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
@@ -644,8 +655,9 @@ class _CaptureLinkChipState extends State<_CaptureLinkChip> {
   }
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
+  Widget build(BuildContext context) => InkWell(
       onTap: _copy,
+      borderRadius: AppDimensions.radiusMedium,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: AppDimensions.paddingHorizontalLarge(context)

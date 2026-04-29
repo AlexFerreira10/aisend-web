@@ -2,6 +2,7 @@ import 'package:aisend/core/constants/app_dimensions.dart';
 import 'package:aisend/core/constants/app_spacer.dart';
 import 'package:aisend/core/theme/context_extension.dart';
 import 'package:aisend/core/utils/app_toast.dart';
+import 'package:aisend/core/widgets/app_dialog.dart';
 import 'package:aisend/data/services/schedule_service.dart';
 import 'package:aisend/models/enums/blast_status_enum.dart';
 import 'package:aisend/view_models/schedule_view_model.dart';
@@ -238,24 +239,23 @@ class _ScheduleCard extends StatelessWidget {
               ),
               tooltip: 'Cancelar',
               onPressed: () async {
-                final confirm = await showDialog<bool>(
-                  context: context,
-                  builder: (_) => AlertDialog(
-                    title: const Text('Cancelar disparo'),
-                    content: const Text(
-                      'Tem certeza que deseja cancelar este agendamento?',
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Não'),
-                      ),
-                      FilledButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Cancelar disparo'),
-                      ),
-                    ],
+                final confirm = await AppDialog.show<bool>(
+                  context,
+                  title: 'Cancelar disparo',
+                  icon: Icons.cancel_outlined,
+                  content: const Text(
+                    'Tem certeza que deseja cancelar este agendamento?',
                   ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Não'),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Cancelar disparo'),
+                    ),
+                  ],
                 );
                 if (confirm == true) {
                   await vm.cancel(item.id);

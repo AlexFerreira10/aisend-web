@@ -1,8 +1,10 @@
 import 'package:aisend/core/constants/app_dimensions.dart';
 import 'package:aisend/core/constants/app_spacer.dart';
+import 'package:aisend/core/providers/theme_provider.dart';
 import 'package:aisend/core/theme/context_extension.dart';
 import 'package:aisend/core/theme/custom_colors_extension.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class AiSendDrawer extends StatelessWidget {
   final String currentRoute;
@@ -163,13 +165,16 @@ class _DrawerItem extends StatelessWidget {
                 : context.colorScheme.onSurfaceVariant,
           ),
           const AppSpacerHorizontal.medium(),
-          Text(
-            label,
-            style: context.textTheme.bodyLarge?.copyWith(
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-              color: isActive
-                  ? context.colorScheme.primary
-                  : context.colorScheme.onSurface,
+          Expanded(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: context.textTheme.bodyLarge?.copyWith(
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                color: isActive
+                    ? context.colorScheme.primary
+                    : context.colorScheme.onSurface,
+              ),
             ),
           ),
         ],
@@ -180,13 +185,34 @@ class _DrawerItem extends StatelessWidget {
 
 class _DrawerFooter extends StatelessWidget {
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(24),
-    child: Text(
-      'v1.1.0 - Test Mode',
-      style: context.textTheme.labelSmall?.copyWith(
-        color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+  Widget build(BuildContext context) {
+    final themeProvider = context.watch<ThemeProvider>();
+    final isDark = themeProvider.mode == ThemeMode.dark ||
+        (themeProvider.mode == ThemeMode.system &&
+            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Row(
+        children: [
+          Text(
+            'v1.1.0 - Test Mode',
+            style: context.textTheme.labelSmall?.copyWith(
+              color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            ),
+          ),
+          const Spacer(),
+          IconButton(
+            icon: Icon(
+              isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+              size: 18,
+            ),
+            tooltip: 'Alternar tema',
+            color: context.colorScheme.onSurfaceVariant,
+            onPressed: themeProvider.toggleDarkLight,
+          ),
+        ],
       ),
-    ),
-  );
+    );
+  }
 }
