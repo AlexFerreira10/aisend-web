@@ -103,35 +103,37 @@ class _LeadFormDialogState extends State<LeadFormDialog> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _Field(
-                  controller: _name,
-                  label: 'Nome *',
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Nome obrigatório'
-                      : null,
-                ),
-                const AppSpacerVertical.medium(),
-                _Field(
-                  controller: _phone,
-                  label: 'Telefone *',
-                  hint: 'Ex: 11999990000',
-                  keyboardType: TextInputType.phone,
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) {
-                      return 'Telefone obrigatório';
-                    }
-                    final digits = v.replaceAll(RegExp(r'\D'), '');
-                    if (digits.length < 10) return 'Mínimo 10 dígitos';
-                    return null;
-                  },
-                ),
-                const AppSpacerVertical.medium(),
-                _ConsultantDropdown(
-                  instances: vm.instances,
-                  value: _selectedConsultantId,
-                  onChanged: (v) => setState(() => _selectedConsultantId = v),
-                ),
-                const AppSpacerVertical.medium(),
+                if (widget.lead == null) ...[
+                  _Field(
+                    controller: _name,
+                    label: 'Nome *',
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Nome obrigatório'
+                        : null,
+                  ),
+                  const AppSpacerVertical.medium(),
+                  _Field(
+                    controller: _phone,
+                    label: 'Telefone *',
+                    hint: 'Ex: 11999990000',
+                    keyboardType: TextInputType.phone,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Telefone obrigatório';
+                      }
+                      final digits = v.replaceAll(RegExp(r'\D'), '');
+                      if (digits.length < 10) return 'Mínimo 10 dígitos';
+                      return null;
+                    },
+                  ),
+                  const AppSpacerVertical.medium(),
+                  _ConsultantDropdown(
+                    instances: vm.instances,
+                    value: _selectedConsultantId,
+                    onChanged: (v) => setState(() => _selectedConsultantId = v),
+                  ),
+                  const AppSpacerVertical.medium(),
+                ],
                 _Field(controller: _specialty, label: 'Especialidade'),
                 const AppSpacerVertical.medium(),
                 _Field(controller: _city, label: 'Cidade'),
