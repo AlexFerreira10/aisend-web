@@ -9,5 +9,5 @@ class ApiException implements Exception {
   bool get isNetworkError => statusCode == 0;
 
   @override
-  String toString() => 'ApiException([1m$statusCode[0m): $message';
+  String toString() => message;
 }

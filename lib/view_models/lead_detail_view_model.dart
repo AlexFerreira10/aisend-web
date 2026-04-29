@@ -1,3 +1,4 @@
+import 'package:aisend/data/services/schemas/api_exception.dart';
 import 'package:aisend/models/message_model.dart';
 import 'package:flutter/foundation.dart';
 import '../data/services/leads_service.dart';
@@ -62,7 +63,7 @@ class LeadDetailViewModel extends ChangeNotifier {
       _waitingHuman = true;
       return null;
     } catch (e) {
-      return 'Erro ao enviar mensagem: $e';
+      return e is ApiException ? e.message : 'Erro ao enviar mensagem. Tente novamente.';
     } finally {
       _isSending = false;
       notifyListeners();
