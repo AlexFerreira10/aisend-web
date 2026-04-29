@@ -1,4 +1,5 @@
 import 'package:aisend/core/constants/app_dimensions.dart';
+import 'package:aisend/views/lead_detail/lead_detail_view.dart';
 import 'package:aisend/core/constants/app_spacer.dart';
 import 'package:aisend/core/theme/context_extension.dart';
 import 'package:aisend/core/utils/app_formatters.dart';
@@ -115,6 +116,11 @@ class _DesktopLeadRowState extends State<_DesktopLeadRow> {
         ),
       );
 
+  void _openChat(BuildContext context) => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => LeadDetailView(lead: widget.lead)),
+      );
+
   Future<void> _confirmDelete(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -159,10 +165,12 @@ class _DesktopLeadRowState extends State<_DesktopLeadRow> {
         : '—';
 
     return MouseRegion(
-      cursor: SystemMouseCursors.basic,
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: AnimatedContainer(
+      child: GestureDetector(
+        onTap: () => _openChat(context),
+        child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         color: _hovered
             ? context.colorScheme.surfaceContainerHighest
@@ -257,6 +265,7 @@ class _DesktopLeadRowState extends State<_DesktopLeadRow> {
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -297,6 +306,11 @@ class _MobileLeadCard extends StatelessWidget {
         ),
       );
 
+  void _openChat(BuildContext context) => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => LeadDetailView(lead: lead)),
+      );
+
   Future<void> _confirmDelete(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -324,7 +338,9 @@ class _MobileLeadCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final phone = AppFormatters.formatPhone(lead.phone);
 
-    return Container(
+    return GestureDetector(
+      onTap: () => _openChat(context),
+      child: Container(
       margin: const EdgeInsets.only(bottom: AppDimensions.kRegular),
       padding: AppDimensions.paddingLarge(context),
       decoration: BoxDecoration(
@@ -377,6 +393,7 @@ class _MobileLeadCard extends StatelessWidget {
           ],
         ],
       ),
+    ),
     );
   }
 }
