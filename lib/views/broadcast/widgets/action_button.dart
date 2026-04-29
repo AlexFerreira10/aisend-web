@@ -69,7 +69,7 @@ class ActionButton extends StatelessWidget {
         ? (vm.canSchedule && !vm.isScheduling)
         : vm.canBroadcast;
     final sendAction = vm.sendMode == SendMode.scheduled
-        ? (canSend ? vm.scheduleBlast : null)
+        ? (canSend ? vm.scheduleBlast : () => _showValidationToast(context, vm))
         : (canSend
               ? () => vm.startBroadcast(() {
                   final total = vm.sentCount + vm.errorCount;
@@ -153,6 +153,12 @@ class ActionButton extends StatelessWidget {
       msg = 'Adicione ou selecione leads para enviar.';
     } else if (vm.dynamicLeadsCount == 0) {
       msg = 'A lista de leads está vazia.';
+    } else if (vm.sendMode == SendMode.scheduled && vm.scheduledAt == null) {
+      msg = 'Selecione a data e hora do agendamento.';
+    } else if (vm.sendMode == SendMode.scheduled &&
+        vm.scheduledAt != null &&
+        !vm.scheduledAt!.isAfter(DateTime.now())) {
+      msg = 'O horário agendado deve ser no futuro.';
     } else if (vm.isBroadcasting) {
       msg = 'Aguarde o disparo terminar.';
     } else if (vm.isPreviewing) {

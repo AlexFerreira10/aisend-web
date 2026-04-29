@@ -168,7 +168,7 @@ class _DataEntrySection extends StatelessWidget {
       ],
       if (vm.leadsFromBase) ...[
         const AppSpacerVertical.medium(),
-        BaseLeadsChip(onClear: vm.clearUpload),
+        BaseLeadsChip(onClear: vm.clearUpload, leadCount: vm.dynamicLeadsCount),
       ],
     ],
   );

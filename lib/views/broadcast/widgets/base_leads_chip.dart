@@ -5,8 +5,9 @@ import '../../../core/constants/app_spacer.dart';
 
 class BaseLeadsChip extends StatelessWidget {
   final VoidCallback onClear;
+  final int leadCount;
 
-  const BaseLeadsChip({super.key, required this.onClear});
+  const BaseLeadsChip({super.key, required this.onClear, required this.leadCount});
 
   @override
   Widget build(BuildContext context) => Container(
@@ -30,7 +31,7 @@ class BaseLeadsChip extends StatelessWidget {
           const AppSpacerHorizontal.regular(),
           Expanded(
             child: Text(
-              'Leads Frios do Banco de Dados selecionados',
+              '$leadCount lead${leadCount != 1 ? 's' : ''} selecionado${leadCount != 1 ? 's' : ''}',
               style: context.textTheme.labelLarge?.copyWith(
                 color: context.colorScheme.secondary,
               ),

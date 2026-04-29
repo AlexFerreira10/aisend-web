@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:aisend/data/services/schemas/api_exception.dart';
 import 'package:aisend/models/follow_up_rule_model.dart';
 import 'package:aisend/models/instance_model.dart';
@@ -130,7 +129,7 @@ class BroadcastViewModel extends ChangeNotifier {
         final content = utf8.decode(bytes);
         final dynamic data = jsonDecode(content);
         if (data is List) {
-          _dynamicLeads = data.map((item) {
+          final raw = data.map((item) {
             final map = item as Map<String, dynamic>;
             final String name = map['nome'] ?? map['name'] ?? 'Sem nome';
             final String phone =
@@ -142,6 +141,7 @@ class BroadcastViewModel extends ChangeNotifier {
               createdAt: DateTime.now(),
             );
           }).where((l) => l.phone.isNotEmpty).toList();
+          _applyDeduplication(raw);
           _uploadedFileName = fileName;
           _leadsFromBase = false;
           notifyListeners();
@@ -151,7 +151,7 @@ class BroadcastViewModel extends ChangeNotifier {
       } else {
         // CSV / XLSX → backend parse
         final parsed = await _broadcastService.parseContacts(bytes, fileName);
-        _dynamicLeads = parsed.contacts.map((c) => LeadModel(
+        final raw = parsed.contacts.map((c) => LeadModel(
               id: '${DateTime.now().millisecondsSinceEpoch}${c.phone}',
               name: c.name,
               phone: c.phone,
@@ -163,6 +163,7 @@ class BroadcastViewModel extends ChangeNotifier {
           _parseWarnings = '${parsed.warnings.length} ignorado(s): ${parsed.warnings.first}'
               '${parsed.warnings.length > 1 ? ' (+${parsed.warnings.length - 1})' : ''}';
         }
+        _applyDeduplication(raw);
         notifyListeners();
       }
     } catch (e) {
@@ -194,6 +195,26 @@ class BroadcastViewModel extends ChangeNotifier {
       _isLoadingLeads = false;
       notifyListeners();
     }
+  }
+
+  void _applyDeduplication(List<LeadModel> raw) {
+    final seen = <String>{};
+    final deduped = raw.where((l) => seen.add(l.phone)).toList();
+    final removed = raw.length - deduped.length;
+    _dynamicLeads = deduped;
+    if (removed > 0) {
+      final msg = '$removed contato${removed > 1 ? 's' : ''} com telefone duplicado '
+          '${removed > 1 ? 'foram removidos' : 'foi removido'}';
+      _parseWarnings = _parseWarnings != null ? '$_parseWarnings\n$msg' : msg;
+    }
+  }
+
+  void setSelectedLeads(List<LeadModel> leads) {
+    _parseWarnings = null;
+    _applyDeduplication(leads);
+    _leadsFromBase = true;
+    _uploadedFileName = null;
+    notifyListeners();
   }
 
   void clearUpload() {

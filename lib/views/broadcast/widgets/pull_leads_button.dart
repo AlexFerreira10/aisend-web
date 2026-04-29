@@ -1,8 +1,12 @@
 import 'package:aisend/core/constants/app_dimensions.dart';
 import 'package:aisend/core/theme/context_extension.dart';
+import 'package:aisend/data/services/consultants_service.dart';
+import 'package:aisend/data/services/leads_service.dart';
+import 'package:aisend/view_models/broadcast_leads_dialog_view_model.dart';
 import 'package:aisend/view_models/broadcast_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'broadcast_leads_dialog.dart';
 
 class PullLeadsButton extends StatefulWidget {
   const PullLeadsButton({super.key});
@@ -14,15 +18,33 @@ class PullLeadsButton extends StatefulWidget {
 class _PullLeadsButtonState extends State<PullLeadsButton> {
   bool _hovered = false;
 
+  void _openDialog(BuildContext context) {
+    final leadsService = context.read<LeadsService>();
+    final consultantsService = context.read<ConsultantsService>();
+    final broadcastVm = context.read<BroadcastViewModel>();
+
+    showDialog<void>(
+      context: context,
+      builder: (_) => ChangeNotifierProvider(
+        create: (_) => BroadcastLeadsDialogViewModel(
+          leadsService: leadsService,
+          consultantsService: consultantsService,
+        )..init(),
+        child: BroadcastLeadsDialog(
+          onConfirm: broadcastVm.setSelectedLeads,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final vm = context.read<BroadcastViewModel>();
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
-        onTap: vm.pullLeadsFromBase,
+        onTap: () => _openDialog(context),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           width: double.infinity,
@@ -41,7 +63,7 @@ class _PullLeadsButtonState extends State<PullLeadsButton> {
             ),
           ),
           child: Text(
-            'Puxar Leads Frios do Banco de Dados',
+            'Buscar Leads',
             style: context.textTheme.labelLarge?.copyWith(
               color: _hovered
                   ? context.colorScheme.primary
