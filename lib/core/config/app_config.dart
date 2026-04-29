@@ -31,6 +31,7 @@ abstract final class AppConfig {
 
   static String leadEndpoint(String id) => '$baseUrl/api/leads/$id';
   static String leadMessageEndpoint(String id) => '$baseUrl/api/leads/$id/message';
+  static String leadChatEndpoint(String id) => '$baseUrl/api/leads/$id/chat';
 
   static String messagesEndpoint(String phone) =>
       '$baseUrl/api/leads/$phone/messages';

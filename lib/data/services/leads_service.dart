@@ -76,4 +76,12 @@ class LeadsService {
   Future<void> sendMessage(String id, Map<String, dynamic> dto) async {
     await _api.post(AppConfig.leadMessageEndpoint(id), body: dto);
   }
+
+  Future<Map<String, dynamic>> sendDirectMessage(String id, String content) async {
+    final response = await _api.post(
+      AppConfig.leadChatEndpoint(id),
+      body: {'content': content},
+    );
+    return response as Map<String, dynamic>;
+  }
 }
