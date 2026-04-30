@@ -70,14 +70,13 @@ class _TableHeader extends StatelessWidget {
           .add(AppDimensions.paddingLarge(context)),
       child: Row(
         children: [
-          Expanded(flex: 2, child: Text('CONTATO', style: style)),
-          Expanded(flex: 2, child: Text('ESPECIALIDADE', style: style)),
-          SizedBox(width: 120, child: Text('STATUS IA', style: style)),
-          const AppSpacerHorizontal.large(),
-          Expanded(flex: 2, child: Text('CONSULTOR', style: style)),
-          SizedBox(width: 90, child: Text('CRIADO EM', style: style)),
-          SizedBox(
-            width: 96,
+          Expanded(flex: 4, child: Text('CONTATO', style: style)),
+          Expanded(flex: 3, child: Text('ESPECIALIDADE', style: style)),
+          Expanded(flex: 2, child: Text('STATUS IA', style: style)),
+          Expanded(flex: 3, child: Text('CONSULTOR', style: style)),
+          Expanded(flex: 2, child: Text('CRIADO EM', style: style)),
+          Expanded(
+            flex: 2,
             child: Align(
               alignment: Alignment.centerRight,
               child: Text('AÇÕES', style: style),
@@ -180,7 +179,7 @@ class _DesktopLeadRowState extends State<_DesktopLeadRow> {
         child: Row(
           children: [
             Expanded(
-              flex: 2,
+              flex: 4,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -197,32 +196,31 @@ class _DesktopLeadRowState extends State<_DesktopLeadRow> {
               ),
             ),
             Expanded(
-              flex: 2,
+              flex: 3,
               child: Text(
-                widget.lead.specialty ?? '—',
+                (widget.lead.specialty == null || widget.lead.specialty == 'null') ? 'N/A' : widget.lead.specialty!,
                 style: context.textTheme.bodySmall?.copyWith(
                   color: context.colorScheme.onSurfaceVariant,
                 ),
               ),
             ),
-            SizedBox(
-              width: 120,
+            Expanded(
+              flex: 2,
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: StatusBadge(status: widget.lead.status),
               ),
             ),
-            const AppSpacerHorizontal.large(),
             Expanded(
-              flex: 2,
+              flex: 3,
               child: Text(
                 consultantName,
                 style: context.textTheme.bodySmall,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            SizedBox(
-              width: 90,
+            Expanded(
+              flex: 2,
               child: Text(
                 _formatDate(widget.lead.createdAt),
                 style: context.textTheme.bodySmall?.copyWith(
@@ -230,8 +228,8 @@ class _DesktopLeadRowState extends State<_DesktopLeadRow> {
                 ),
               ),
             ),
-            SizedBox(
-              width: 96,
+            Expanded(
+              flex: 2,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -241,7 +239,7 @@ class _DesktopLeadRowState extends State<_DesktopLeadRow> {
                     onPressed: () => _openEdit(context),
                     tooltip: 'Editar',
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                   ),
                   IconButton(
                     icon: Icon(Icons.send_rounded,
@@ -249,7 +247,7 @@ class _DesktopLeadRowState extends State<_DesktopLeadRow> {
                     onPressed: () => _openSend(context),
                     tooltip: 'Disparar mensagem',
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                   ),
                   IconButton(
                     icon: const Icon(Icons.delete_outline_rounded,
@@ -257,7 +255,7 @@ class _DesktopLeadRowState extends State<_DesktopLeadRow> {
                     onPressed: () => _confirmDelete(context),
                     tooltip: 'Deletar',
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                   ),
                 ],
               ),
@@ -385,12 +383,13 @@ class _MobileLeadCard extends StatelessWidget {
               ),
             ],
           ),
-          if (lead.specialty != null) ...[
-            const AppSpacerVertical.small(),
-            Text(lead.specialty!,
-                style: context.textTheme.bodySmall?.copyWith(
-                    color: context.colorScheme.onSurfaceVariant)),
-          ],
+          const AppSpacerVertical.small(),
+          Text(
+            (lead.specialty == null || lead.specialty == 'null') ? 'N/A' : lead.specialty!,
+            style: context.textTheme.bodySmall?.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+          ),
         ],
       ),
     ),

@@ -41,7 +41,9 @@ class _PreviewCardState extends State<PreviewCard> {
         }
       }
       while (_controllers.length < widget.parts.length) {
-        _controllers.add(TextEditingController(text: widget.parts[_controllers.length]));
+        _controllers.add(
+          TextEditingController(text: widget.parts[_controllers.length]),
+        );
       }
     }
   }
@@ -56,62 +58,69 @@ class _PreviewCardState extends State<PreviewCard> {
 
   @override
   Widget build(BuildContext context) => Container(
-      width: double.infinity,
-      padding: AppDimensions.paddingExtraLarge(context),
-      decoration: BoxDecoration(
-        color: context.customColors.successBg,
-        borderRadius: AppDimensions.radiusExtraLarge,
-        border: Border.all(
-          color: context.customColors.success.withValues(alpha: 0.4),
-          width: 1.5,
-        ),
+    width: double.infinity,
+    padding: AppDimensions.paddingExtraLarge(context),
+    decoration: BoxDecoration(
+      color: context.customColors.successBg,
+      borderRadius: AppDimensions.radiusExtraLarge,
+      border: Border.all(
+        color: context.customColors.success.withValues(alpha: 0.4),
+        width: 1.5,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Icon(Icons.visibility_rounded,
-                  size: 18, color: context.customColors.success),
-              const AppSpacerHorizontal.regular(),
-              Text(
-                'Prévia da mensagem',
-                style: context.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: context.customColors.success,
-                ),
-              ),
-              const Spacer(),
-              GestureDetector(
-                onTap: widget.onReset,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Icon(Icons.refresh_rounded,
-                        size: 14,
-                        color: context.colorScheme.onSurfaceVariant),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Regenerar',
-                      style: context.textTheme.labelMedium?.copyWith(
-                        color: context.colorScheme.onSurfaceVariant,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const AppSpacerVertical.small(),
-          Text(
-            'Clique em qualquer parte para editar antes de enviar.',
-            style: context.textTheme.bodySmall?.copyWith(
-              color: context.colorScheme.onSurfaceVariant,
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Icon(
+              Icons.visibility_rounded,
+              size: 18,
+              color: context.customColors.success,
             ),
+            const AppSpacerHorizontal.regular(),
+            Text(
+              'Prévia da mensagem',
+              style: context.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: context.customColors.success,
+              ),
+            ),
+            const Spacer(),
+            GestureDetector(
+              onTap: widget.onReset,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(
+                    Icons.refresh_rounded,
+                    size: 14,
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Regenerar',
+                    style: context.textTheme.labelMedium?.copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const AppSpacerVertical.small(),
+        Text(
+          'Clique em qualquer parte para editar antes de enviar.',
+          style: context.textTheme.bodySmall?.copyWith(
+            color: context.colorScheme.onSurfaceVariant,
           ),
-          const AppSpacerVertical.large(),
-          ...List.generate(_controllers.length, (i) => Padding(
+        ),
+        const AppSpacerVertical.large(),
+        ...List.generate(
+          _controllers.length,
+          (i) => Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: TextField(
               controller: _controllers[i],
@@ -141,13 +150,14 @@ class _PreviewCardState extends State<PreviewCard> {
                   borderRadius: AppDimensions.radiusLarge,
                   borderSide: BorderSide(
                     color: context.colorScheme.primary,
-                    width: 1.5,
+                    width: 1.0,
                   ),
                 ),
               ),
             ),
-          )),
-        ],
-      ),
-    );
+          ),
+        ),
+      ],
+    ),
+  );
 }

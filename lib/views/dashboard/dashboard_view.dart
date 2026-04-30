@@ -11,72 +11,85 @@ import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:provider/provider.dart';
 import 'widgets/kpi_card.dart';
 import 'widgets/lead_table.dart';
+import 'widgets/right_panel.dart';
 
 class DashboardView extends StatelessWidget {
   const DashboardView({super.key});
 
   @override
   Widget build(BuildContext context) => AiSendScaffold(
-      currentRoute: '/',
-      body: Builder(
-        builder: (context) {
-          final vm = context.watch<DashboardViewModel>();
+    currentRoute: '/',
+    body: Builder(
+      builder: (context) {
+        final vm = context.watch<DashboardViewModel>();
 
-          if (vm.isLoading && vm.activityLeads.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
+        if (vm.isLoading && vm.activityLeads.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          if (vm.hasError && vm.activityLeads.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Icon(Icons.cloud_off_rounded,
-                      size: 64,
-                      color: context.colorScheme.onSurfaceVariant),
-                  const AppSpacerVertical.large(),
-                  Text(
-                    vm.errorMessage,
-                    textAlign: TextAlign.center,
-                    style: context.textTheme.bodyLarge,
-                  ),
-                  const AppSpacerVertical.medium(),
-                  FilledButton.icon(
-                    onPressed: vm.loadData,
-                    icon: const Icon(Icons.refresh_rounded),
-                    label: const Text('Tentar novamente'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return RefreshIndicator(
-            onRefresh: vm.loadData,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Padding(
-                padding: context.isDesktop
-                    ? const EdgeInsets.all(32)
-                    : (AppDimensions.extraLarge(context).isFinite
-                        ? AppDimensions.paddingExtraLarge(context)
-                        : AppDimensions.paddingLarge(context)),
-                child: context.isDesktop
-                    ? const _DesktopLayout()
-                    : const _MainContent(),
-              ),
+        if (vm.hasError && vm.activityLeads.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(
+                  Icons.cloud_off_rounded,
+                  size: 64,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+                const AppSpacerVertical.large(),
+                Text(
+                  vm.errorMessage,
+                  textAlign: TextAlign.center,
+                  style: context.textTheme.bodyLarge,
+                ),
+                const AppSpacerVertical.medium(),
+                FilledButton.icon(
+                  onPressed: vm.loadData,
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Tentar novamente'),
+                ),
+              ],
             ),
           );
-        },
-      ),
-    );
+        }
+
+        if (context.isDesktop) {
+          return const _DesktopLayout();
+        }
+
+        return RefreshIndicator(
+          onRefresh: vm.loadData,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Padding(
+              padding: AppDimensions.extraLarge(context).isFinite
+                  ? AppDimensions.paddingExtraLarge(context)
+                  : AppDimensions.paddingLarge(context),
+              child: const _MainContent(),
+            ),
+          ),
+        );
+      },
+    ),
+  );
 }
 
 class _DesktopLayout extends StatelessWidget {
   const _DesktopLayout();
 
   @override
-  Widget build(BuildContext context) => const _MainContent();
+  Widget build(BuildContext context) {
+    final vm = context.watch<DashboardViewModel>();
+    return RefreshIndicator(
+      onRefresh: vm.loadData,
+      child: const SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.all(28),
+        child: _MainContent(),
+      ),
+    );
+  }
 }
 
 class _MainContent extends StatelessWidget {
@@ -84,22 +97,43 @@ class _MainContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    final width = MediaQuery.sizeOf(context).width;
+    final isLargeDesktop = width >= 1300;
+
+    final leftColumn = const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const <Widget>[
+      children: <Widget>[
         _PageHeader(),
-        AppSpacerVertical.large(),
+        AppSpacerVertical.extraLarge(),
         _FilterRow(),
         AppSpacerVertical.extraLarge(),
         _KpiSection(),
-        AppSpacerVertical.huge(),
+        AppSpacerVertical.extraLarge(),
         _ActivitySection(),
+      ],
+    );
+
+    if (!isLargeDesktop) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          leftColumn,
+          const AppSpacerVertical.extraLarge(),
+          const DashboardRightPanel(),
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Expanded(child: leftColumn),
+        const SizedBox(width: 28),
+        const SizedBox(width: 272, child: DashboardRightPanel()),
       ],
     );
   }
 }
-
-
 
 class _PageHeader extends StatelessWidget {
   const _PageHeader();
@@ -137,15 +171,16 @@ class _FilterRow extends StatelessWidget {
         onChanged: vm.selectInstance,
         width: isMobile ? double.infinity : 220,
       ),
-      isMobile ? const AppSpacerVertical.regular() : const AppSpacerHorizontal.regular(),
+      isMobile
+          ? const AppSpacerVertical.regular()
+          : const AppSpacerHorizontal.regular(),
       // Period filter
       _StyledDropdown<String>(
         value: vm.selectedPeriod,
         items: vm.periodFilters
-            .map((p) => DropdownMenuItem(
-                  value: p,
-                  child: Text(vm.periodLabel(p)),
-                ))
+            .map(
+              (p) => DropdownMenuItem(value: p, child: Text(vm.periodLabel(p))),
+            )
             .toList(),
         onChanged: (v) => vm.selectPeriod(v!),
         width: isMobile ? double.infinity : 180,
@@ -176,31 +211,34 @@ class _StyledDropdown<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-      width: width == double.infinity ? null : width,
-      child: Container(
-        height: 40,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          color: context.colorScheme.surfaceContainer,
-          borderRadius: AppDimensions.radiusMedium,
-          border: Border.all(color: context.colorScheme.outline, width: 1),
-        ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<T>(
-            value: value,
-            items: items,
-            onChanged: onChanged,
-            isExpanded: true,
-            dropdownColor: context.colorScheme.surfaceContainer,
-            icon: Icon(Icons.keyboard_arrow_down_rounded,
-                color: context.colorScheme.onSurfaceVariant, size: 18),
-            style: context.textTheme.bodyMedium?.copyWith(
-              color: context.colorScheme.onSurface,
-            ),
+    width: width == double.infinity ? null : width,
+    child: Container(
+      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: context.colorScheme.surfaceContainer,
+        borderRadius: AppDimensions.radiusMedium,
+        border: Border.all(color: context.colorScheme.outline, width: 1),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<T>(
+          value: value,
+          items: items,
+          onChanged: onChanged,
+          isExpanded: true,
+          dropdownColor: context.colorScheme.surfaceContainer,
+          icon: Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: context.colorScheme.onSurfaceVariant,
+            size: 18,
+          ),
+          style: context.textTheme.bodyMedium?.copyWith(
+            color: context.colorScheme.onSurface,
           ),
         ),
       ),
-    );
+    ),
+  );
 }
 
 class _KpiSection extends StatelessWidget {
@@ -208,7 +246,10 @@ class _KpiSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<DashboardViewModel>();
-    final isMobile = context.isMobile;
+
+    final custom = context.customColors;
+    final hotPct = vm.hotPercent;
+    final responsePct = vm.responseRate;
 
     final cards = <KpiCard>[
       KpiCard(
@@ -216,49 +257,61 @@ class _KpiSection extends StatelessWidget {
         value: AppFormatters.formatNumber(vm.totalLeads),
         description: 'Volume total na base de dados',
         icon: Icons.people_alt_rounded,
-        iconColor: context.colorScheme.secondary,
-        iconBgColor: context.colorScheme.secondary.withValues(alpha: 0.1),
+        iconColor: context.colorScheme.primary,
+        iconBgColor: context.colorScheme.primary.withValues(alpha: 0.1),
+        progress: vm.totalLeads > 0
+            ? (vm.totalLeads / (vm.totalLeads + 100)).clamp(0.0, 1.0)
+            : 0.0,
+        trend: vm.totalLeads > 0 ? '${vm.totalLeads} cadastrados' : null,
+        trendColor: context.colorScheme.primary,
       ),
       KpiCard(
         label: 'Taxa de Resposta',
-        value: '${(vm.responseRate * 100).toStringAsFixed(0)}%',
-        description: '% que respondeu ao último disparo',
+        value: '${(responsePct * 100).toStringAsFixed(0)}%',
+        description: '% respondeu ao último disparo',
         icon: Icons.trending_up_rounded,
-        iconColor: context.customColors.success,
-        iconBgColor: context.customColors.successBg,
+        iconColor: custom.success,
+        iconBgColor: custom.successBg,
+        progress: responsePct,
+        trend: responsePct >= 0.5 ? '↑ Boa taxa' : '↓ Pode melhorar',
+        trendColor: responsePct >= 0.5 ? custom.success : custom.warning,
+        timeLabel: 'todos os períodos',
       ),
       KpiCard(
         label: 'Leads Quentes',
         value: AppFormatters.formatNumber(vm.hotLeadsCount),
-        description: 'Classificados como interessados pela IA',
+        description: 'Interessados — prontos para contato',
         icon: Icons.local_fire_department_rounded,
-        iconColor: context.customColors.statusHot,
-        iconBgColor: context.customColors.statusHotBg,
+        iconColor: custom.statusHot,
+        iconBgColor: custom.statusHotBg,
+        progress: hotPct,
+        trend: '${(hotPct * 100).toStringAsFixed(0)}% da base',
+        trendColor: custom.statusHot,
       ),
     ];
 
-    if (isMobile) {
+    final width = MediaQuery.sizeOf(context).width;
+    final isLarge = width >= 1300;
+
+    if (!isLarge) {
       return Column(
         children: cards
-            .map((c) => Padding(
-                  padding: AppDimensions.paddingBottom(context),
-                child: c,
-                ))
+            .map(
+              (c) =>
+                  Padding(padding: const EdgeInsets.only(bottom: 16), child: c),
+            )
             .toList(),
       );
     }
 
     return Row(
-      children: cards
-          .map((c) => Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    right: c == cards.last ? 0 : AppDimensions.kExtraLarge,
-                  ),
-                  child: c,
-                ),
-              ))
-          .toList(),
+      children: [
+        Expanded(child: cards[0]),
+        const SizedBox(width: 16),
+        Expanded(child: cards[1]),
+        const SizedBox(width: 16),
+        Expanded(child: cards[2]),
+      ],
     );
   }
 }
@@ -281,110 +334,121 @@ class _ActivitySectionState extends State<_ActivitySection> {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<DashboardViewModel>();
-    final isMobile = context.isMobile;
+    final width = MediaQuery.sizeOf(context).width;
+    final isLarge = width >= 1300;
+    final isMobile = width < 600;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        // ─── Header ────────────────────────────────────────────────────────
-        Row(
-          children: <Widget>[
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    'Atividade Recente',
-                    style: context.textTheme.headlineMedium,
-                  ),
-                  const AppSpacerVertical.tiny(),
-                  Text(
-                    'Quem respondeu e classificação da IA',
-                    style: context.textTheme.bodyMedium?.copyWith(
-                      color: context.colorScheme.onSurfaceVariant,
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(isMobile ? 16 : 24),
+      decoration: BoxDecoration(
+        color: context.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.colorScheme.outlineVariant, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          // ─── Header ────────────────────────────────────────────────────────
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      'Atividade Recente',
+                      style: context.textTheme.headlineSmall,
                     ),
-                  ),
-                ],
+                    const AppSpacerVertical.tiny(),
+                    Text(
+                      'Quem respondeu e classificação da IA',
+                      style: context.textTheme.bodyMedium?.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              if (!isMobile)
+                _GradientButton(
+                  label: 'Criar Novo Disparo',
+                  icon: Icons.add_rounded,
+                  onTap: () =>
+                      Navigator.pushReplacementNamed(context, '/broadcast'),
+                ),
+            ],
+          ),
+
+          const AppSpacerVertical.large(),
+
+          // ─── Search + Status Chips ─────────────────────────────────────────
+          if (!isLarge)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SearchField(controller: _searchController, vm: vm),
+                const AppSpacerVertical.regular(),
+                _StatusChips(vm: vm),
+              ],
+            )
+          else
+            Row(
+              children: [
+                SizedBox(
+                  width: 240,
+                  child: _SearchField(controller: _searchController, vm: vm),
+                ),
+                const AppSpacerHorizontal.large(),
+                Expanded(child: _StatusChips(vm: vm)),
+              ],
             ),
-            if (!isMobile)
-              _GradientButton(
+
+          const AppSpacerVertical.large(),
+
+          // ─── Table ─────────────────────────────────────────────────────────
+          if (vm.activityLoading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (vm.activityLeads.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 40),
+                child: Text(
+                  'Nenhum lead encontrado.',
+                  style: context.textTheme.bodyMedium?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            )
+          else
+            LeadTable(leads: vm.activityLeads),
+
+          // ─── Pagination ────────────────────────────────────────────────────
+          if (vm.activityTotalPages > 1) ...[
+            const AppSpacerVertical.large(),
+            _Pagination(vm: vm),
+          ],
+
+          if (isMobile) ...[
+            const AppSpacerVertical.large(),
+            SizedBox(
+              width: double.infinity,
+              child: _GradientButton(
                 label: 'Criar Novo Disparo',
                 icon: Icons.add_rounded,
                 onTap: () =>
                     Navigator.pushReplacementNamed(context, '/broadcast'),
               ),
+            ),
           ],
-        ),
-
-        const AppSpacerVertical.large(),
-
-        // ─── Search + Status Chips ─────────────────────────────────────────
-        if (isMobile)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _SearchField(controller: _searchController, vm: vm),
-              const AppSpacerVertical.regular(),
-              _StatusChips(vm: vm),
-            ],
-          )
-        else
-          Row(
-            children: [
-              SizedBox(
-                width: 240,
-                child: _SearchField(controller: _searchController, vm: vm),
-              ),
-              const AppSpacerHorizontal.large(),
-              _StatusChips(vm: vm),
-            ],
-          ),
-
-        const AppSpacerVertical.large(),
-
-        // ─── Table ─────────────────────────────────────────────────────────
-        if (vm.activityLoading)
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 40),
-              child: CircularProgressIndicator(),
-            ),
-          )
-        else if (vm.activityLeads.isEmpty)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 40),
-              child: Text(
-                'Nenhum lead encontrado.',
-                style: context.textTheme.bodyMedium?.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          )
-        else
-          LeadTable(leads: vm.activityLeads),
-
-        // ─── Pagination ────────────────────────────────────────────────────
-        if (vm.activityTotalPages > 1) ...[
-          const AppSpacerVertical.large(),
-          _Pagination(vm: vm),
         ],
-
-        if (isMobile) ...[
-          const AppSpacerVertical.large(),
-          SizedBox(
-            width: double.infinity,
-            child: _GradientButton(
-              label: 'Criar Novo Disparo',
-              icon: Icons.add_rounded,
-              onTap: () =>
-                  Navigator.pushReplacementNamed(context, '/broadcast'),
-            ),
-          ),
-        ],
-      ],
+      ),
     );
   }
 }
@@ -396,41 +460,53 @@ class _SearchField extends StatelessWidget {
   const _SearchField({required this.controller, required this.vm});
 
   @override
-  Widget build(BuildContext context) => Container(
-        height: 40,
-        decoration: BoxDecoration(
-          color: context.colorScheme.surfaceContainer,
-          borderRadius: AppDimensions.radiusMedium,
-          border: Border.all(color: context.colorScheme.outline, width: 1),
-        ),
-        child: ValueListenableBuilder<TextEditingValue>(
-          valueListenable: controller,
-          builder: (context, value, _) => TextField(
-            controller: controller,
-            onChanged: vm.setActivitySearch,
-            style: context.textTheme.bodyMedium,
-            decoration: InputDecoration(
-              hintText: 'Buscar por nome...',
-              hintStyle: context.textTheme.bodyMedium?.copyWith(
-                color: context.colorScheme.onSurfaceVariant,
+  Widget build(BuildContext context) =>
+      ValueListenableBuilder<TextEditingValue>(
+        valueListenable: controller,
+        builder: (context, value, _) => TextField(
+          controller: controller,
+          onChanged: vm.setActivitySearch,
+          style: context.textTheme.bodyMedium,
+          decoration: InputDecoration(
+            hintText: 'Buscar por nome...',
+            hintStyle: context.textTheme.bodyMedium?.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+            prefixIcon: Icon(
+              Icons.search_rounded,
+              size: 18,
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+            suffixIcon: value.text.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 16),
+                    onPressed: () {
+                      controller.clear();
+                      vm.setActivitySearch('');
+                    },
+                  )
+                : null,
+            filled: true,
+            fillColor: context.colorScheme.surface,
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 10,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: AppDimensions.radiusExtraLarge,
+              borderSide: BorderSide(color: context.colorScheme.outline),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: AppDimensions.radiusExtraLarge,
+              borderSide: BorderSide(color: context.colorScheme.outline),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: AppDimensions.radiusExtraLarge,
+              borderSide: BorderSide(
+                color: context.colorScheme.primary,
+                width: 1.0,
               ),
-              prefixIcon: Icon(
-                Icons.search_rounded,
-                size: 18,
-                color: context.colorScheme.onSurfaceVariant,
-              ),
-              suffixIcon: value.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 16),
-                      onPressed: () {
-                        controller.clear();
-                        vm.setActivitySearch('');
-                      },
-                    )
-                  : null,
-              border: InputBorder.none,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),
           ),
         ),
@@ -500,7 +576,7 @@ class _Chip extends StatelessWidget {
       color: isActive
           ? context.colorScheme.primary
           : context.colorScheme.surfaceContainer,
-      borderRadius: AppDimensions.radiusMedium,
+      borderRadius: AppDimensions.radiusExtraLarge,
       border: Border.all(
         color: isActive
             ? context.colorScheme.primary
@@ -517,7 +593,7 @@ class _Chip extends StatelessWidget {
     );
     return InkWell(
       onTap: onTap,
-      borderRadius: AppDimensions.radiusMedium,
+      borderRadius: AppDimensions.radiusExtraLarge,
       child: reduceMotion
           ? Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -561,8 +637,7 @@ class _Pagination extends StatelessWidget {
         IconButton(
           icon: const Icon(Icons.chevron_right_rounded),
           tooltip: 'Próxima página',
-          onPressed:
-              page < total ? () => vm.setActivityPage(page + 1) : null,
+          onPressed: page < total ? () => vm.setActivityPage(page + 1) : null,
           color: context.colorScheme.onSurfaceVariant,
         ),
       ],
@@ -590,48 +665,47 @@ class _GradientButtonState extends State<_GradientButton> {
 
   @override
   Widget build(BuildContext context) => MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: InkWell(
-        onTap: widget.onTap,
-        borderRadius: AppDimensions.radiusLarge,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-          decoration: BoxDecoration(
-            gradient: context.customColors.primaryGradient,
-            borderRadius: AppDimensions.radiusLarge,
-            boxShadow: _hovered
-                ? <BoxShadow>[
-                    BoxShadow(
-                      color: context.colorScheme.primary.withValues(alpha: 0.4),
-                      blurRadius: 20,
-                      offset: const Offset(0, 6),
-                    ),
-                  ]
-                : [],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children:<Widget> [
-              Icon(widget.icon, size: 16, color: Colors.white),
-              const AppSpacerHorizontal.regular(),
-              Text(
-                widget.label,
-                style: context.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
+    cursor: SystemMouseCursors.click,
+    onEnter: (_) => setState(() => _hovered = true),
+    onExit: (_) => setState(() => _hovered = false),
+    child: InkWell(
+      onTap: widget.onTap,
+      borderRadius: AppDimensions.radiusLarge,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        decoration: BoxDecoration(
+          gradient: context.customColors.primaryGradient,
+          borderRadius: AppDimensions.radiusLarge,
+          boxShadow: _hovered
+              ? <BoxShadow>[
+                  BoxShadow(
+                    color: context.colorScheme.primary.withValues(alpha: 0.4),
+                    blurRadius: 20,
+                    offset: const Offset(0, 6),
+                  ),
+                ]
+              : [],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(widget.icon, size: 16, color: Colors.white),
+            const AppSpacerHorizontal.regular(),
+            Text(
+              widget.label,
+              style: context.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    );
+    ),
+  );
 }
-
 
 class _CaptureLinkChip extends StatefulWidget {
   final String label;
@@ -656,46 +730,47 @@ class _CaptureLinkChipState extends State<_CaptureLinkChip> {
 
   @override
   Widget build(BuildContext context) => InkWell(
-      onTap: _copy,
-      borderRadius: AppDimensions.radiusMedium,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: AppDimensions.paddingHorizontalLarge(context)
-            .add(AppDimensions.paddingVerticalSmall(context)),
-        decoration: BoxDecoration(
+    onTap: _copy,
+    borderRadius: AppDimensions.radiusExtraLarge,
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      padding: AppDimensions.paddingHorizontalLarge(
+        context,
+      ).add(AppDimensions.paddingVerticalSmall(context)),
+      decoration: BoxDecoration(
+        color: _copied
+            ? context.customColors.success.withValues(alpha: 0.12)
+            : context.colorScheme.surface,
+        borderRadius: AppDimensions.radiusExtraLarge,
+        border: Border.all(
           color: _copied
-              ? context.customColors.success.withValues(alpha: 0.12)
-              : context.colorScheme.surface,
-          borderRadius: AppDimensions.radiusMedium,
-          border: Border.all(
-            color: _copied
-                ? context.customColors.success
-                : context.colorScheme.outline,
-            width: 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(
-              _copied ? Icons.check_rounded : Icons.copy_rounded,
-              size: 13,
-              color: _copied
-                  ? context.customColors.success
-                  : context.colorScheme.onSurfaceVariant,
-            ),
-            const AppSpacerHorizontal.tiny(),
-            Text(
-              widget.label,
-              style: context.textTheme.labelSmall?.copyWith(
-                color: _copied
-                    ? context.customColors.success
-                    : context.colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
+              ? context.customColors.success
+              : context.colorScheme.outline,
+          width: 1,
         ),
       ),
-    );
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(
+            _copied ? Icons.check_rounded : Icons.copy_rounded,
+            size: 13,
+            color: _copied
+                ? context.customColors.success
+                : context.colorScheme.onSurfaceVariant,
+          ),
+          const AppSpacerHorizontal.tiny(),
+          Text(
+            widget.label,
+            style: context.textTheme.labelSmall?.copyWith(
+              color: _copied
+                  ? context.customColors.success
+                  : context.colorScheme.onSurface,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

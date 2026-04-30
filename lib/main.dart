@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'core/providers/theme_provider.dart';
 import 'core/theme/app_theme.dart';
@@ -28,6 +29,13 @@ class AiSendApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.mode,
+            locale: const Locale('pt', 'BR'),
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [Locale('pt', 'BR'), Locale('en')],
             initialRoute: '/',
             routes: {
               '/': (_) => const DashboardView(),

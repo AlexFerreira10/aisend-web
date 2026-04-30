@@ -131,7 +131,7 @@ class _SendModesCard extends StatelessWidget {
                       children: [
                         Text(
                           m.label,
-                          style: context.textTheme.labelMedium?.copyWith(
+                          style: context.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w700,
                           ),
                         ),

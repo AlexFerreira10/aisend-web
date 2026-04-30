@@ -46,10 +46,24 @@ class DashboardViewModel extends ChangeNotifier {
   int _totalLeads = 0;
   double _responseRate = 0.0;
   int _hotLeadsCount = 0;
+  int _warmLeadsCount = 0;
+  int _coldLeadsCount = 0;
+  int _activeClientCount = 0;
+  int _waitingHumanCount = 0;
 
   int get totalLeads => _totalLeads;
   double get responseRate => _responseRate;
   int get hotLeadsCount => _hotLeadsCount;
+  int get warmLeadsCount => _warmLeadsCount;
+  int get coldLeadsCount => _coldLeadsCount;
+  int get activeClientCount => _activeClientCount;
+  int get waitingHumanCount => _waitingHumanCount;
+
+  double get hotPercent => _totalLeads > 0 ? _hotLeadsCount / _totalLeads : 0.0;
+  double get warmPercent => _totalLeads > 0 ? _warmLeadsCount / _totalLeads : 0.0;
+  double get coldPercent => _totalLeads > 0 ? _coldLeadsCount / _totalLeads : 0.0;
+  double get activeClientPercent =>
+      _totalLeads > 0 ? _activeClientCount / _totalLeads : 0.0;
 
   // ─── Activity Filters ─────────────────────────────────────────────────────────
   static const int _kActivityPageSize = 6;
@@ -109,6 +123,16 @@ class DashboardViewModel extends ChangeNotifier {
       _hotLeadsCount = allLeads
           .where((l) => l.aiClassification == LeadStatusEnum.hot)
           .length;
+      _warmLeadsCount = allLeads
+          .where((l) => l.aiClassification == LeadStatusEnum.warm)
+          .length;
+      _coldLeadsCount = allLeads
+          .where((l) => l.aiClassification == LeadStatusEnum.cold)
+          .length;
+      _activeClientCount = allLeads
+          .where((l) => l.aiClassification == LeadStatusEnum.activeClient)
+          .length;
+      _waitingHumanCount = allLeads.where((l) => l.waitingHuman == true).length;
 
       await _loadActivity();
     } on ApiException catch (e) {

@@ -29,8 +29,8 @@ class BroadcastView extends StatelessWidget {
         padding: context.isDesktop
             ? const EdgeInsets.all(32)
             : (AppDimensions.extraLarge(context).isFinite
-                ? AppDimensions.paddingExtraLarge(context)
-                : AppDimensions.paddingLarge(context)),
+                  ? AppDimensions.paddingExtraLarge(context)
+                  : AppDimensions.paddingLarge(context)),
         child: context.isDesktop
             ? const _DesktopLayout()
             : const _MobileLayout(),
@@ -148,8 +148,11 @@ class _DataEntrySection extends StatelessWidget {
         leadCount: vm.dynamicLeadsCount > 0 ? vm.dynamicLeadsCount : null,
         onUpload: () =>
             vm.pickAndParseFile(onError: (err) => AppToast.show(context, err)),
-        onFileDropped: (bytes, name) =>
-            vm.processFile(bytes, name, onError: (err) => AppToast.show(context, err)),
+        onFileDropped: (bytes, name) => vm.processFile(
+          bytes,
+          name,
+          onError: (err) => AppToast.show(context, err),
+        ),
         onClear: vm.clearUpload,
       ),
       if (vm.parseWarnings != null) ...[

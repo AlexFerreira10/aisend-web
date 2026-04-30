@@ -79,14 +79,14 @@ class _PageHeader extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: <Widget>[
       Text('Follow-up Automático', style: context.textTheme.displayMedium),
-      const AppSpacerVertical.tiny(),
+      const AppSpacerVertical.small(),
       Text(
         'Regras ativas de recontato automático. Para criar, use a Máquina de Disparos.',
         style: context.textTheme.bodyMedium?.copyWith(
           color: context.colorScheme.onSurfaceVariant,
         ),
       ),
-      const AppSpacerVertical.large(),
+      const AppSpacerVertical.extraLarge(),
       _InstanceSelector(vm: vm),
     ],
   );

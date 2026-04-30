@@ -5,6 +5,8 @@ import 'package:aisend/view_models/broadcast_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'mode_chip.dart';
+import 'schedule_dialog.dart';
+import 'package:aisend/core/widgets/app_time_picker_dialog.dart';
 
 class SendModeSection extends StatelessWidget {
   const SendModeSection({super.key});
@@ -41,21 +43,22 @@ class SendModeSection extends StatelessWidget {
         ),
         if (vm.sendMode == SendMode.scheduled) ...[
           const AppSpacerVertical.large(),
-          DateTimePicker(
-            value: vm.scheduledAt,
-            onChanged: vm.setScheduledAt,
-          ),
+          DateTimePicker(value: vm.scheduledAt, onChanged: vm.setScheduledAt),
           if (vm.scheduleSuccess) ...[
             const AppSpacerVertical.medium(),
             Row(
               children: <Widget>[
-                const Icon(Icons.check_circle_rounded,
-                    size: 16, color: Colors.green),
+                const Icon(
+                  Icons.check_circle_rounded,
+                  size: 16,
+                  color: Colors.green,
+                ),
                 const AppSpacerHorizontal.tiny(),
                 Text(
                   'Disparo agendado com sucesso! Acompanhe em Agendamentos.',
-                  style:
-                      context.textTheme.bodySmall?.copyWith(color: Colors.green),
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: Colors.green,
+                  ),
                 ),
               ],
             ),
@@ -64,8 +67,9 @@ class SendModeSection extends StatelessWidget {
             const AppSpacerVertical.medium(),
             Text(
               vm.scheduleError!,
-              style: context.textTheme.bodySmall
-                  ?.copyWith(color: context.colorScheme.error),
+              style: context.textTheme.bodySmall?.copyWith(
+                color: context.colorScheme.error,
+              ),
             ),
           ],
         ],
@@ -76,8 +80,9 @@ class SendModeSection extends StatelessWidget {
             const AppSpacerVertical.medium(),
             Text(
               vm.ruleError!,
-              style: context.textTheme.bodySmall
-                  ?.copyWith(color: context.colorScheme.error),
+              style: context.textTheme.bodySmall?.copyWith(
+                color: context.colorScheme.error,
+              ),
             ),
           ],
         ],
@@ -110,9 +115,12 @@ class _RecurrentPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Configuração da Recorrência',
-              style: context.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            'Configuração da Recorrência',
+            style: context.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const AppSpacerVertical.large(),
           _ConfigRow(
             label: 'Dias sem resposta',
@@ -126,19 +134,44 @@ class _RecurrentPanel extends StatelessWidget {
           const AppSpacerVertical.regular(),
           _ConfigRow(
             label: 'Horário de envio',
-            child: DropdownButton<int>(
-              value: vm.followUpHour,
-              underline: const SizedBox(),
-              isDense: true,
-              items: List.generate(24, (i) => i)
-                  .map((h) => DropdownMenuItem(
-                        value: h,
-                        child: Text('${h.toString().padLeft(2, '0')}:00'),
-                      ))
-                  .toList(),
-              onChanged: (v) {
-                if (v != null) vm.setFollowUpHour(v);
+            child: InkWell(
+              onTap: () async {
+                final time = await AppTimePickerDialog.show(
+                  context,
+                  initialTime: TimeOfDay(hour: vm.followUpHour, minute: 0),
+                );
+                if (time != null) vm.setFollowUpHour(time.hour);
               },
+              borderRadius: AppDimensions.radiusMedium,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: context.colorScheme.surface,
+                  borderRadius: AppDimensions.radiusMedium,
+                  border: Border.all(color: context.colorScheme.outline),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${vm.followUpHour.toString().padLeft(2, '0')}:00',
+                      style: context.textTheme.titleSmall?.copyWith(
+                        color: context.colorScheme.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.edit_rounded,
+                      size: 12,
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
           const AppSpacerVertical.regular(),
@@ -152,10 +185,13 @@ class _RecurrentPanel extends StatelessWidget {
             ),
           ),
           const AppSpacerVertical.large(),
-          Text('Público-alvo',
-              style: context.textTheme.bodySmall?.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600)),
+          Text(
+            'Público-alvo',
+            style: context.textTheme.bodySmall?.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const AppSpacerVertical.small(),
           Wrap(
             spacing: 8,
@@ -165,7 +201,10 @@ class _RecurrentPanel extends StatelessWidget {
                 onTap: () => vm.toggleFollowUpClassification(opt.$1),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 150),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: selected
                         ? context.colorScheme.primaryContainer
@@ -206,9 +245,12 @@ class _ConfigRow extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(label,
-              style: context.textTheme.bodyMedium
-                  ?.copyWith(fontWeight: FontWeight.w500)),
+          child: Text(
+            label,
+            style: context.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ),
         child,
       ],
@@ -221,11 +263,12 @@ class _Stepper extends StatelessWidget {
   final int min;
   final int max;
   final ValueChanged<int> onChanged;
-  const _Stepper(
-      {required this.value,
-      required this.min,
-      required this.max,
-      required this.onChanged});
+  const _Stepper({
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -241,10 +284,13 @@ class _Stepper extends StatelessWidget {
         ),
         SizedBox(
           width: 32,
-          child: Text('$value',
-              textAlign: TextAlign.center,
-              style: context.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          child: Text(
+            '$value',
+            textAlign: TextAlign.center,
+            style: context.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ),
         IconButton(
           icon: const Icon(Icons.add_rounded),
@@ -285,25 +331,15 @@ class DateTimePicker extends StatelessWidget {
 
     return GestureDetector(
       onTap: () async {
-        final now = DateTime.now();
-        final date = await showDatePicker(
-          context: context,
-          initialDate: value ?? now.add(const Duration(days: 1)),
-          firstDate: now,
-          lastDate: now.add(const Duration(days: 365)),
-        );
-        if (date == null || !context.mounted) return;
-        final time = await showTimePicker(
-          context: context,
-          initialTime: TimeOfDay.fromDateTime(value ?? now),
-        );
-        if (time == null) return;
-        onChanged(
-            DateTime(date.year, date.month, date.day, time.hour, time.minute));
+        final result = await ScheduleDialog.show(context, initialDate: value);
+        if (result != null) {
+          onChanged(result);
+        }
       },
       child: Container(
-        padding: AppDimensions.paddingHorizontalMediumLarge(context)
-            .add(AppDimensions.paddingVerticalMedium(context)),
+        padding: AppDimensions.paddingHorizontalMediumLarge(
+          context,
+        ).add(AppDimensions.paddingVerticalMedium(context)),
         decoration: BoxDecoration(
           color: context.colorScheme.surface,
           borderRadius: AppDimensions.radiusLarge,

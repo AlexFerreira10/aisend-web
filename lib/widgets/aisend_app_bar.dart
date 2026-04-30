@@ -15,8 +15,8 @@ class AiSendAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    final showDrawerIcon = width < 900;
-    final useShortLabels = width >= 900 && width < 1200;
+    final showDrawerIcon = width < 1300;
+    final useShortLabels = width >= 1300 && width < 1500;
 
     return Container(
       height: 64,
@@ -178,8 +178,9 @@ class _NavButtonState extends State<_NavButton> {
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
 
-    final padding = AppDimensions.paddingHorizontalMediumLarge(context)
-        .add(AppDimensions.paddingVerticalRegular(context));
+    final padding = AppDimensions.paddingHorizontalMediumLarge(
+      context,
+    ).add(AppDimensions.paddingVerticalRegular(context));
 
     final decoration = BoxDecoration(
       color: widget.isActive
@@ -240,7 +241,11 @@ class _NavButtonState extends State<_NavButton> {
             onTap: widget.onTap,
             borderRadius: AppDimensions.radiusMedium,
             child: reduceMotion
-                ? Container(padding: padding, decoration: decoration, child: content)
+                ? Container(
+                    padding: padding,
+                    decoration: decoration,
+                    child: content,
+                  )
                 : AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     padding: padding,

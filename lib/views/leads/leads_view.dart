@@ -70,7 +70,7 @@ class _MainContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _PageHeader(onCreateTap: () => _openCreateLead(context)),
-        const AppSpacerVertical.large(),
+        const AppSpacerVertical.extraLarge(),
         _FilterRow(vm: vm),
         const AppSpacerVertical.extraLarge(),
         if (vm.isLoading && vm.leads.isEmpty)
@@ -85,7 +85,7 @@ class _MainContent extends StatelessWidget {
         else
           LeadsTable(leads: vm.leads),
         if (vm.totalPages > 1) ...[
-          const AppSpacerVertical.large(),
+          const AppSpacerVertical.extraLarge(),
           _Pagination(vm: vm),
         ],
         const AppSpacerVertical.extraLarge(),
@@ -174,7 +174,7 @@ class _FilterRowState extends State<_FilterRow> {
         children: _chips.map((chip) {
           final active = vm.selectedClassification == chip.cls;
           return Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.only(right: 12),
             child: _Chip(
               label: chip.label,
               isActive: active,
@@ -190,9 +190,9 @@ class _FilterRowState extends State<_FilterRow> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           searchField,
-          const AppSpacerVertical.regular(),
+          const AppSpacerVertical.medium(),
           consultantDropdown,
-          const AppSpacerVertical.regular(),
+          const AppSpacerVertical.medium(),
           statusChips,
         ],
       );
@@ -203,12 +203,12 @@ class _FilterRowState extends State<_FilterRow> {
       children: [
         Row(
           children: [
-            SizedBox(width: 240, child: searchField),
+            SizedBox(width: 320, child: searchField),
             const AppSpacerHorizontal.regular(),
             SizedBox(width: 220, child: consultantDropdown),
           ],
         ),
-        const AppSpacerVertical.regular(),
+        const AppSpacerVertical.medium(),
         statusChips,
       ],
     );
@@ -222,47 +222,60 @@ class _SearchField extends StatelessWidget {
   const _SearchField({required this.controller, required this.onChanged});
 
   @override
-  Widget build(BuildContext context) => Container(
-    height: 40,
-    decoration: BoxDecoration(
-      color: context.colorScheme.surfaceContainer,
-      borderRadius: AppDimensions.radiusMedium,
-      border: Border.all(color: context.colorScheme.outline, width: 1),
-    ),
-    child: ValueListenableBuilder<TextEditingValue>(
-      valueListenable: controller,
-      builder: (context, value, _) => TextField(
-        controller: controller,
-        onChanged: onChanged,
-        style: context.textTheme.bodyMedium,
-        decoration: InputDecoration(
-          hintText: 'Buscar por nome ou telefone...',
-          hintStyle: context.textTheme.bodyMedium?.copyWith(
-            color: context.colorScheme.onSurfaceVariant,
-          ),
-          prefixIcon: Icon(
-            Icons.search_rounded,
-            size: 18,
-            color: context.colorScheme.onSurfaceVariant,
-          ),
-          suffixIcon: value.text.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.close_rounded, size: 16),
-                  onPressed: () {
-                    controller.clear();
-                    onChanged('');
-                  },
-                )
-              : null,
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 10,
+  Widget build(BuildContext context) =>
+      ValueListenableBuilder<TextEditingValue>(
+        valueListenable: controller,
+        builder: (context, value, _) => TextField(
+          controller: controller,
+          onChanged: onChanged,
+          style: context.textTheme.bodyMedium,
+          decoration: InputDecoration(
+            hintText: 'Buscar por nome ou telefone...',
+            hintStyle: context.textTheme.bodyMedium?.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+            prefixIcon: Icon(
+              Icons.search_rounded,
+              size: 18,
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+            suffixIcon: value.text.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 16),
+                    onPressed: () {
+                      controller.clear();
+                      onChanged('');
+                    },
+                  )
+                : null,
+            filled: true,
+            fillColor:
+                Theme.of(context).colorScheme.brightness == Brightness.dark
+                ? const Color(0xFF13131A)
+                : context.colorScheme.surface,
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 10,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: AppDimensions.radiusExtraLarge,
+              borderSide: BorderSide(color: context.colorScheme.outline),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: AppDimensions.radiusExtraLarge,
+              borderSide: BorderSide(color: context.colorScheme.outline),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: AppDimensions.radiusExtraLarge,
+              borderSide: BorderSide(
+                color: context.colorScheme.primary,
+                width: 1.5,
+              ),
+            ),
           ),
         ),
-      ),
-    ),
-  );
+      );
 }
 
 class _ConsultantFilter extends StatelessWidget {
@@ -330,7 +343,7 @@ class _Chip extends StatelessWidget {
         color: isActive
             ? context.colorScheme.primary
             : context.colorScheme.surfaceContainer,
-        borderRadius: AppDimensions.radiusMedium,
+        borderRadius: AppDimensions.radiusExtraLarge,
         border: Border.all(
           color: isActive
               ? context.colorScheme.primary

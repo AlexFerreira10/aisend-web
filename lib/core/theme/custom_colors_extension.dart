@@ -15,9 +15,13 @@ class AppCustomColors extends ThemeExtension<AppCustomColors> {
   final Color errorBg;
   final Color warning;
   final Color warningBg;
+  final Color accentSecondary;
+  final Color accentSecondaryBg;
+  final Color accentSecondaryGlow;
   final LinearGradient primaryGradient;
   final LinearGradient logoGradient;
   final LinearGradient surfaceGradient;
+  final LinearGradient amberGradient;
 
   const AppCustomColors({
     required this.statusHot,
@@ -32,9 +36,13 @@ class AppCustomColors extends ThemeExtension<AppCustomColors> {
     required this.errorBg,
     required this.warning,
     required this.warningBg,
+    required this.accentSecondary,
+    required this.accentSecondaryBg,
+    required this.accentSecondaryGlow,
     required this.primaryGradient,
     required this.logoGradient,
     required this.surfaceGradient,
+    required this.amberGradient,
   });
 
   @override
@@ -51,9 +59,13 @@ class AppCustomColors extends ThemeExtension<AppCustomColors> {
     Color? errorBg,
     Color? warning,
     Color? warningBg,
+    Color? accentSecondary,
+    Color? accentSecondaryBg,
+    Color? accentSecondaryGlow,
     LinearGradient? primaryGradient,
     LinearGradient? logoGradient,
     LinearGradient? surfaceGradient,
+    LinearGradient? amberGradient,
   }) {
     return AppCustomColors(
       statusHot: statusHot ?? this.statusHot,
@@ -68,9 +80,13 @@ class AppCustomColors extends ThemeExtension<AppCustomColors> {
       errorBg: errorBg ?? this.errorBg,
       warning: warning ?? this.warning,
       warningBg: warningBg ?? this.warningBg,
+      accentSecondary: accentSecondary ?? this.accentSecondary,
+      accentSecondaryBg: accentSecondaryBg ?? this.accentSecondaryBg,
+      accentSecondaryGlow: accentSecondaryGlow ?? this.accentSecondaryGlow,
       primaryGradient: primaryGradient ?? this.primaryGradient,
       logoGradient: logoGradient ?? this.logoGradient,
       surfaceGradient: surfaceGradient ?? this.surfaceGradient,
+      amberGradient: amberGradient ?? this.amberGradient,
     );
   }
 
@@ -90,9 +106,33 @@ class AppCustomColors extends ThemeExtension<AppCustomColors> {
       errorBg: Color.lerp(errorBg, other.errorBg, t)!,
       warning: Color.lerp(warning, other.warning, t)!,
       warningBg: Color.lerp(warningBg, other.warningBg, t)!,
-      primaryGradient: LinearGradient.lerp(primaryGradient, other.primaryGradient, t)!,
+      accentSecondary: Color.lerp(accentSecondary, other.accentSecondary, t)!,
+      accentSecondaryBg: Color.lerp(
+        accentSecondaryBg,
+        other.accentSecondaryBg,
+        t,
+      )!,
+      accentSecondaryGlow: Color.lerp(
+        accentSecondaryGlow,
+        other.accentSecondaryGlow,
+        t,
+      )!,
+      primaryGradient: LinearGradient.lerp(
+        primaryGradient,
+        other.primaryGradient,
+        t,
+      )!,
       logoGradient: LinearGradient.lerp(logoGradient, other.logoGradient, t)!,
-      surfaceGradient: LinearGradient.lerp(surfaceGradient, other.surfaceGradient, t)!,
+      surfaceGradient: LinearGradient.lerp(
+        surfaceGradient,
+        other.surfaceGradient,
+        t,
+      )!,
+      amberGradient: LinearGradient.lerp(
+        amberGradient,
+        other.amberGradient,
+        t,
+      )!,
     );
   }
 
@@ -109,9 +149,13 @@ class AppCustomColors extends ThemeExtension<AppCustomColors> {
     errorBg: AppColorsDark.errorBg,
     warning: AppColorsDark.warning,
     warningBg: AppColorsDark.warningBg,
+    accentSecondary: AppColorsDark.accentSecondary,
+    accentSecondaryBg: AppColorsDark.accentSecondaryBg,
+    accentSecondaryGlow: AppColorsDark.accentSecondaryGlow,
     primaryGradient: AppColorsDark.primaryGradient,
     logoGradient: AppColorsDark.logoGradient,
     surfaceGradient: AppColorsDark.surfaceGradient,
+    amberGradient: AppColorsDark.amberGradient,
   );
 
   static const light = AppCustomColors(
@@ -127,12 +171,17 @@ class AppCustomColors extends ThemeExtension<AppCustomColors> {
     errorBg: AppColorsLight.errorBg,
     warning: AppColorsLight.warning,
     warningBg: AppColorsLight.warningBg,
+    accentSecondary: AppColorsLight.accentSecondary,
+    accentSecondaryBg: AppColorsLight.accentSecondaryBg,
+    accentSecondaryGlow: AppColorsLight.accentSecondaryGlow,
     primaryGradient: AppColorsLight.primaryGradient,
     logoGradient: AppColorsLight.logoGradient,
     surfaceGradient: AppColorsLight.surfaceGradient,
+    amberGradient: AppColorsLight.amberGradient,
   );
 }
 
 extension AppCustomColorsExtension on BuildContext {
-  AppCustomColors get customColors => Theme.of(this).extension<AppCustomColors>()!;
+  AppCustomColors get customColors =>
+      Theme.of(this).extension<AppCustomColors>()!;
 }

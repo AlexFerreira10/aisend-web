@@ -45,7 +45,7 @@ class LeadModel {
         id: json['id'] as String,
         name: json['name'] as String? ?? 'Sem nome',
         phone: json['phone'] as String,
-        specialty: json['specialty'] as String?,
+        specialty: (json['specialty'] == 'null') ? null : json['specialty'] as String?,
         registration: json['registration'] as String?,
         consultantId: json['consultantId'] as String?,
         funnelStatus: FunnelStatusEnumExtension.fromString(json['funnelStatus'] as String?),

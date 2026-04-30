@@ -1,4 +1,4 @@
-import 'package:aisend/core/theme/context_extension.dart';
+import 'package:aisend/core/theme/app_colors.dart';
 import 'package:aisend/widgets/aisend_app_bar.dart';
 import 'package:aisend/widgets/aisend_drawer.dart';
 import 'package:aisend/widgets/side_nav.dart';
@@ -18,17 +18,26 @@ class AiSendScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 1300;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (isDesktop) {
+      final bg = isDark ? AppColorsDark.background : AppColorsLight.background;
+      final surface = isDark ? AppColorsDark.surface : AppColorsLight.surface;
       return Container(
-        color: context.colorScheme.surface,
+        color: bg,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             SideNav(currentRoute: currentRoute),
             Expanded(
-              child: Material(color: Colors.transparent, child: body),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Material(color: surface, child: body),
+                ),
+              ),
             ),
           ],
         ),
@@ -36,6 +45,9 @@ class AiSendScaffold extends StatelessWidget {
     }
 
     return Scaffold(
+      backgroundColor: isDark
+          ? AppColorsDark.background
+          : AppColorsLight.background,
       appBar: AiSendAppBar(currentRoute: currentRoute),
       drawer: AiSendDrawer(currentRoute: currentRoute),
       floatingActionButton: floatingActionButton,
